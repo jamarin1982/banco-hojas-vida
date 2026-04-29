@@ -3,17 +3,25 @@ import cors from "cors";
 import dotenv from "dotenv";
 import candidatosRoutes from "./routes/candidatos.js";
 import vacantesRoutes from "./routes/vacantes.js";
+import authRoutes from "./routes/auth.js";
 import { assertDatabaseConnection } from "./db.js";
 import { requestContext } from "./middlewares/requestContext.js";
 import { logger } from "./utils/logger.js";
 import { getMetricsSnapshot } from "./utils/metrics.js";
 
-
 dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 4000;
-app.use(cors());
+
+const allowedOrigins = (process.env.CORS_ORIGINS || "http://localhost:5173").split(",");
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
+    callback(new Error("Not allowed by CORS"));
+  },
+  credentials: true,
+}));
 app.use(express.json());
 app.use(requestContext);
 
@@ -69,7 +77,7 @@ app.get("/internal/metrics", (req, res) => {
   });
 });
 
-// RUTAS PÚBLICAS
+app.use("/api/auth", authRoutes);
 app.use("/api/candidatos", candidatosRoutes);
 app.use("/api/vacantes", vacantesRoutes);
 
@@ -101,5 +109,3 @@ async function startServer() {
 }
 
 startServer();
-
-

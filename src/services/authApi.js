@@ -1,0 +1,100 @@
+const API_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:4000";
+
+async function toJson(res) {
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || `Error ${res.status}`);
+  return data;
+}
+
+function authHeaders(token) {
+  return { "Content-Type": "application/json", Authorization: `Bearer ${token}` };
+}
+
+export async function apiRegister({ nombre, email, password, rol, nombreEmpresa }) {
+  const res = await fetch(`${API_URL}/api/auth/register`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ nombre, email, password, rol, nombreEmpresa }),
+  });
+  return toJson(res);
+}
+
+export async function apiLogin({ email, password, rolSolicitado }) {
+  const res = await fetch(`${API_URL}/api/auth/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password, rolSolicitado }),
+  });
+  return toJson(res);
+}
+
+export async function apiMe(token) {
+  const res = await fetch(`${API_URL}/api/auth/me`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return toJson(res);
+}
+
+export async function apiForgotPassword(email) {
+  const res = await fetch(`${API_URL}/api/auth/forgot-password`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email }),
+  });
+  return toJson(res);
+}
+
+export async function apiResetPassword({ token, password }) {
+  const res = await fetch(`${API_URL}/api/auth/reset-password`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ token, password }),
+  });
+  return toJson(res);
+}
+
+export async function apiGetMiPerfil(token) {
+  const res = await fetch(`${API_URL}/api/auth/mi-perfil`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return toJson(res);
+}
+
+export async function apiUpdateMiPerfil(token, datos) {
+  const res = await fetch(`${API_URL}/api/auth/mi-perfil`, {
+    method: "PUT",
+    headers: authHeaders(token),
+    body: JSON.stringify(datos),
+  });
+  return toJson(res);
+}
+
+export async function apiGetMisAplicaciones(token) {
+  const res = await fetch(`${API_URL}/api/auth/mis-aplicaciones`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return toJson(res);
+}
+
+export async function apiSubirCvPerfil(token, file) {
+  const formData = new FormData();
+  formData.append("cv", file);
+  const res = await fetch(`${API_URL}/api/auth/mi-perfil/cv`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+    body: formData,
+  });
+  return toJson(res);
+}
+
+export async function apiAnalizarCvPerfil(token) {
+  const res = await fetch(`${API_URL}/api/auth/mi-perfil/analizar-cv`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return toJson(res);
+}
+
+export function getCvPerfilUrl(cvPath) {
+  return `${API_URL}/${cvPath}`;
+}

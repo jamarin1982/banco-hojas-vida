@@ -6,6 +6,7 @@ import {
   deleteVacante,
   calculateMatchingScores,
   getTopCandidatesForVacante,
+  applyToVacante,
 } from "../services/vacantesService.js";
 import { logger } from "../utils/logger.js";
 
@@ -87,6 +88,20 @@ export async function recalculateMatchingHandler(req, res, next) {
     res.json({ 
       message: "Matching recalculado",
       scoresCount: scores.length
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function applyToVacanteHandler(req, res, next) {
+  try {
+    const { id } = req.params;
+    const { candidatoId, scoreTotal } = await applyToVacante(id, req.user.id);
+    res.json({
+      message: "Aplicación registrada exitosamente",
+      candidatoId,
+      scoreTotal,
     });
   } catch (error) {
     next(error);

@@ -1,3 +1,24 @@
+-- Tabla de Candidatos
+CREATE TABLE IF NOT EXISTS candidatos (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  nombre VARCHAR(255) NOT NULL,
+  ciudad VARCHAR(100) NOT NULL,
+  cargo VARCHAR(100) NOT NULL,
+  experiencia INT DEFAULT 0,
+  certificaciones TEXT,
+  disponibilidad VARCHAR(50),
+  jornada VARCHAR(50),
+  aspiracion DECIMAL(10, 2) DEFAULT 0,
+  estado VARCHAR(50) DEFAULT 'Aplicó',
+  observaciones TEXT,
+  cv_path VARCHAR(255),
+  fecha_creacion VARCHAR(50),
+  fecha_actualizacion VARCHAR(50),
+  INDEX idx_estado (estado),
+  INDEX idx_ciudad (ciudad),
+  INDEX idx_cargo (cargo)
+);
+
 -- Tabla de Vacantes
 CREATE TABLE IF NOT EXISTS vacantes (
   id INT PRIMARY KEY AUTO_INCREMENT,

@@ -1,63 +1,94 @@
-const API_URL = "http://localhost:4000/api";
+const API_URL = import.meta.env.VITE_API_BASE_URL
+  ? `${import.meta.env.VITE_API_BASE_URL}/api`
+  : "http://localhost:4000/api";
 
-// Obtener todas las vacantes
+function getToken() {
+  return localStorage.getItem("bhv_token");
+}
+
+function authHeaders(extra = {}) {
+  const token = getToken();
+  return {
+    "Content-Type": "application/json",
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...extra,
+  };
+}
+
+async function handleResponse(response) {
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    throw new Error(data.error || `Error ${response.status}`);
+  }
+  return response.json();
+}
+
+// ─── Públicas (no requieren token) ───────────────────────────────────────────
+
 export async function fetchVacantes(estado = null) {
   const query = estado ? `?estado=${estado}` : "";
   const response = await fetch(`${API_URL}/vacantes${query}`);
-  if (!response.ok) throw new Error("Error cargando vacantes");
-  return await response.json();
+  return handleResponse(response);
 }
 
-// Obtener una vacante específica
 export async function fetchVacanteById(id) {
   const response = await fetch(`${API_URL}/vacantes/${id}`);
-  if (!response.ok) throw new Error("Error cargando vacante");
-  return await response.json();
+  return handleResponse(response);
 }
 
-// Crear nueva vacante
+// ─── Empresa (requieren token) ────────────────────────────────────────────────
+
 export async function createVacante(vacante) {
   const response = await fetch(`${API_URL}/vacantes`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: authHeaders(),
     body: JSON.stringify(vacante),
   });
-  if (!response.ok) throw new Error("Error creando vacante");
-  return await response.json();
+  return handleResponse(response);
 }
 
-// Actualizar vacante
 export async function updateVacante(id, vacante) {
   const response = await fetch(`${API_URL}/vacantes/${id}`, {
     method: "PUT",
-    headers: { "Content-Type": "application/json" },
+    headers: authHeaders(),
     body: JSON.stringify(vacante),
   });
-  if (!response.ok) throw new Error("Error actualizando vacante");
-  return await response.json();
+  return handleResponse(response);
 }
 
-// Eliminar vacante
 export async function deleteVacante(id) {
   const response = await fetch(`${API_URL}/vacantes/${id}`, {
     method: "DELETE",
+    headers: authHeaders(),
   });
-  if (!response.ok) throw new Error("Error eliminando vacante");
-  return await response.json();
+  return handleResponse(response);
 }
 
-// Obtener candidatos sugeridos para una vacante
 export async function fetchTopCandidatesForVacante(vacanteId, limit = 10) {
-  const response = await fetch(`${API_URL}/vacantes/${vacanteId}/candidatos?limit=${limit}`);
-  if (!response.ok) throw new Error("Error obteniendo candidatos sugeridos");
-  return await response.json();
+  const response = await fetch(
+    `${API_URL}/vacantes/${vacanteId}/candidatos?limit=${limit}`,
+    { headers: authHeaders() }
+  );
+  return handleResponse(response);
 }
 
-// Recalcular matching para una vacante
 export async function recalculateVacanteMatching(vacanteId) {
   const response = await fetch(`${API_URL}/vacantes/${vacanteId}/matching/recalcular`, {
     method: "POST",
+    headers: authHeaders(),
   });
-  if (!response.ok) throw new Error("Error recalculando matching");
-  return await response.json();
+  return handleResponse(response);
+}
+
+// ─── Candidato (requiere token de candidato) ──────────────────────────────────
+
+export async function applyToVacante(vacanteId, token) {
+  const response = await fetch(`${API_URL}/vacantes/${vacanteId}/aplicar`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  return handleResponse(response);
 }

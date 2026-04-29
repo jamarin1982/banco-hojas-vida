@@ -22,4 +22,17 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Variables de entorno (nunca subir al repo)
 src/backend/.env
+.env
+.env.local
+.env.*.local
+
+# Archivos subidos por usuarios
+src/backend/uploads/cv/*.pdf
+src/backend/uploads/cv/*.PDF
+
+# Archivos temporales de BD
+src/backend/temp-db-check.mjs
+src/backend/checkDb.mjs
