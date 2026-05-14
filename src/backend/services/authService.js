@@ -5,6 +5,8 @@ import { pool } from "../db.js";
 import { createHttpError } from "../utils/httpError.js";
 import { logger } from "../utils/logger.js";
 import { sendPasswordResetEmail } from "../utils/mailer.js";
+import { readCvFile } from "../utils/readCvFile.js";
+import { analyzeCvWithGemini } from "../utils/cvGemini.js";
 
 const JWT_SECRET = process.env.JWT_SECRET || "dev_secret_change_in_production";
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "7d";
@@ -25,7 +27,7 @@ function safeUser(user) {
 
 // ─── Registro ─────────────────────────────────────────────────────────────────
 
-export async function registerUser({ nombre, email, password, rol = "candidato", nombreEmpresa }) {
+export async function registerUser({ nombre, email, password, rol = "candidato", nombreEmpresa, cvPath }) {
   const now = new Date().toISOString();
 
   const rolesValidos = ["candidato", "empresa"];
@@ -102,7 +104,37 @@ export async function registerUser({ nombre, email, password, rol = "candidato",
        VALUES (?, 'Por definir', 'Por definir', 0, '', 'Inmediata', 'Completa', 0, 'Aplicó', '')`,
       [nombre]
     );
-    await pool.query("UPDATE usuarios SET candidato_id = ? WHERE id = ?", [candResult.insertId, usuarioId]);
+    const candidatoId = candResult.insertId;
+    if (cvPath) {
+      await pool.query("UPDATE candidatos SET cv_path = ? WHERE id = ?", [cvPath, candidatoId]);
+
+      // Auto-analizar CV con Gemini y llenar perfil
+      try {
+        const text = await readCvFile(cvPath);
+        const analisis = await analyzeCvWithGemini(text);
+        const certs = Array.isArray(analisis.certificaciones) ? analisis.certificaciones.join(", ") : "";
+        await pool.query(
+          `UPDATE candidatos SET nombre = ?, ciudad = ?, cargo = ?, experiencia = ?,
+           certificaciones = ?, observaciones = ? WHERE id = ?`,
+          [
+            analisis.nombre || nombre,
+            analisis.ciudad || "Por definir",
+            analisis.cargo || "Por definir",
+            analisis.experiencia || 0,
+            certs,
+            analisis.resumen || "",
+            candidatoId,
+          ]
+        );
+        logger.info(`Perfil de candidato ${candidatoId} completado con Gemini automáticamente`);
+      } catch (err) {
+        logger.warn(`No se pudo analizar CV con Gemini en registro: ${err.message}`);
+        if (!process.env.GEMINI_API_KEY) {
+          logger.warn("Para activar el análisis automático, agrega GEMINI_API_KEY en el .env del backend");
+        }
+      }
+    }
+    await pool.query("UPDATE usuarios SET candidato_id = ? WHERE id = ?", [candidatoId, usuarioId]);
   }
 
   const [[user]] = await pool.query("SELECT * FROM usuarios WHERE id = ?", [usuarioId]);

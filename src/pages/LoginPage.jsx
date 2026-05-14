@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { motion as Motion, AnimatePresence } from "framer-motion";
-import { Eye, EyeOff, Mail, Lock, User, AlertCircle, Loader2, Briefcase, UserCheck } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, User, AlertCircle, Loader2, Briefcase, UserCheck, FileText, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,6 +19,7 @@ export default function LoginPage() {
   const [form, setForm] = useState({
     nombre: "", email: "", password: "", rol: "candidato", nombreEmpresa: "",
   });
+  const [cvFile, setCvFile] = useState(null);
 
   const setField = (f, v) => setForm((p) => ({ ...p, [f]: v }));
 
@@ -31,12 +32,25 @@ export default function LoginPage() {
       if (mode === "login") {
         result = await apiLogin({ email: form.email, password: form.password });
       } else {
+        if (form.rol === "candidato") {
+          if (!cvFile) {
+            throw new Error("Debes adjuntar tu hoja de vida (PDF o DOCX) para registrarte.");
+          }
+          const allowedTypes = ["application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"];
+          if (!allowedTypes.includes(cvFile.type)) {
+            throw new Error("Formato no válido. Solo se permiten archivos PDF o DOCX.");
+          }
+          if (cvFile.size > 10 * 1024 * 1024) {
+            throw new Error("El archivo excede el tamaño máximo de 10 MB.");
+          }
+        }
         result = await apiRegister({
           nombre: form.nombre,
           email: form.email,
           password: form.password,
           rol: form.rol,
           nombreEmpresa: form.rol === "empresa" ? form.nombreEmpresa : undefined,
+          cvFile: form.rol === "candidato" ? cvFile : undefined,
         });
       }
       login(result.token, result.user);
@@ -183,6 +197,60 @@ export default function LoginPage() {
                         required
                       />
                     </div>
+                  </Motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* CV — solo si rol candidato */}
+              <AnimatePresence>
+                {mode === "register" && form.rol === "candidato" && (
+                  <Motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="space-y-1.5 overflow-hidden"
+                  >
+                    <Label className="text-sm font-medium text-slate-700">
+                      Hoja de vida <span className="text-red-500">*</span>
+                    </Label>
+                    <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-500">
+                      <FileText className="h-4 w-4 text-slate-400 flex-shrink-0" />
+                      {cvFile ? (
+                        <span className="flex-1 truncate text-slate-700">{cvFile.name}</span>
+                      ) : (
+                        <span className="flex-1">Seleccionar archivo PDF o DOCX</span>
+                      )}
+                      <label className="cursor-pointer rounded-md bg-purple-50 px-2.5 py-1 text-xs font-medium text-purple-700 hover:bg-purple-100 transition-colors ml-auto flex-shrink-0">
+                        {cvFile ? "Cambiar" : "Examinar"}
+                        <input
+                          type="file"
+                          accept=".pdf,.docx"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0] || null;
+                            setCvFile(file);
+                            if (file) {
+                              const allowed = ["application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"];
+                              if (!allowed.includes(file.type)) {
+                                setError("Formato no válido. Solo se permiten archivos PDF o DOCX.");
+                                setCvFile(null);
+                              } else if (file.size > 10 * 1024 * 1024) {
+                                setError("El archivo excede el tamaño máximo de 10 MB.");
+                                setCvFile(null);
+                              } else {
+                                setError("");
+                              }
+                            }
+                          }}
+                        />
+                      </label>
+                      {cvFile && (
+                        <button type="button" onClick={() => { setCvFile(null); setError(""); }} className="text-slate-400 hover:text-red-500">
+                          <X className="h-4 w-4" />
+                        </button>
+                      )}
+                    </div>
+                    <p className="text-xs text-slate-400">Archivos PDF o DOCX · Máximo 10 MB</p>
                   </Motion.div>
                 )}
               </AnimatePresence>

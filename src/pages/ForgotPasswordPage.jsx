@@ -28,7 +28,8 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-950 to-slate-900 flex items-center justify-center p-4">
+    <div className="min-h-screen flex items-center justify-center p-4"
+      style={{ background: "linear-gradient(135deg, #0d2a52 0%, #1a3a6b 60%, #1565c0 100%)" }}>
       <Motion.div
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
@@ -36,10 +37,24 @@ export default function ForgotPasswordPage() {
       >
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 shadow-lg mb-4">
-            <span className="text-2xl font-bold text-white">BH</span>
+          <div className="flex justify-center mb-4">
+            <div style={{
+              width: 101, height: 101, borderRadius: "18px", flexShrink: 0,
+              background: "linear-gradient(135deg, #64d4f7 0%, #29b6f6 30%, #1565c0 65%, #0d2a52 100%)",
+              padding: 5,
+              boxShadow: "0 0 28px rgba(41,182,246,0.6), 0 6px 24px rgba(0,0,0,0.5)",
+            }}>
+              <div style={{
+                width: "100%", height: "100%", borderRadius: "13px",
+                background: "white", display: "flex", alignItems: "center",
+                justifyContent: "center", overflow: "hidden",
+              }}>
+                <img src="/logo-colba.png" alt="Grupo Colba"
+                  style={{ width: "90%", height: "90%", objectFit: "contain" }} />
+              </div>
+            </div>
           </div>
-          <h1 className="text-2xl font-bold text-white">Banco Hojas de Vida</h1>
+          <h1 className="text-2xl font-bold text-white">Colba Empleos</h1>
         </div>
 
         <div className="rounded-2xl bg-white shadow-2xl p-6 space-y-5">

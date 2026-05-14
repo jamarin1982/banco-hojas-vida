@@ -10,11 +10,23 @@ function authHeaders(token) {
   return { "Content-Type": "application/json", Authorization: `Bearer ${token}` };
 }
 
-export async function apiRegister({ nombre, email, password, rol, nombreEmpresa }) {
+export async function apiRegister({ nombre, email, password, rol, nombreEmpresa, cvFile }) {
+  const body = cvFile ? new FormData() : JSON.stringify({ nombre, email, password, rol, nombreEmpresa });
+  const headers = cvFile ? {} : { "Content-Type": "application/json" };
+
+  if (cvFile) {
+    body.append("nombre", nombre);
+    body.append("email", email);
+    body.append("password", password);
+    body.append("rol", rol);
+    if (nombreEmpresa) body.append("nombreEmpresa", nombreEmpresa);
+    body.append("cv", cvFile);
+  }
+
   const res = await fetch(`${API_URL}/api/auth/register`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ nombre, email, password, rol, nombreEmpresa }),
+    headers,
+    body,
   });
   return toJson(res);
 }
@@ -93,6 +105,24 @@ export async function apiAnalizarCvPerfil(token) {
     headers: { Authorization: `Bearer ${token}` },
   });
   return toJson(res);
+}
+
+export async function apiAnalizarCvPerfilGemini(token) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 90000); // 90s timeout
+  try {
+    const res = await fetch(`${API_URL}/api/auth/mi-perfil/analizar-cv-gemini`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+      signal: controller.signal,
+    });
+    return toJson(res);
+  } catch (err) {
+    if (err.name === "AbortError") throw new Error("Gemini tardó demasiado. Intenta de nuevo.");
+    throw err;
+  } finally {
+    clearTimeout(timeoutId);
+  }
 }
 
 export function getCvPerfilUrl(cvPath) {

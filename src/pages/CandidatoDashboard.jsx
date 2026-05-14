@@ -16,30 +16,45 @@ import { useAuth } from "@/context/AuthContext";
 import { usePortalVacantes } from "@/hooks/usePortalVacantes";
 import {
   apiGetMiPerfil, apiUpdateMiPerfil, apiGetMisAplicaciones,
-  apiSubirCvPerfil, apiAnalizarCvPerfil, getCvPerfilUrl,
+  apiSubirCvPerfil, apiAnalizarCvPerfil, apiAnalizarCvPerfilGemini, getCvPerfilUrl,
 } from "@/services/authApi";
 
-// ─── Sidebar candidato ────────────────────────────────────────────────────────
+// --- Sidebar candidato --------------------------------------------------------
 
 const NAV_ITEMS = [
-  { id: "vacantes", label: "Buscar Vacantes", icon: Briefcase, color: "from-purple-500 to-purple-600" },
-  { id: "perfil",   label: "Mi Perfil",       icon: User,      color: "from-teal-500 to-teal-600"   },
-  { id: "mis-aplicaciones", label: "Mis Aplicaciones", icon: FileText, color: "from-blue-500 to-blue-600" },
+  { id: "vacantes", label: "Buscar Vacantes",   icon: Briefcase, activeStyle: { background: "linear-gradient(135deg,#1a3a6b,#1565c0)" } },
+  { id: "perfil",   label: "Mi Perfil",         icon: User,      activeStyle: { background: "linear-gradient(135deg,#1565c0,#29b6f6)" } },
+  { id: "mis-aplicaciones", label: "Mis Aplicaciones", icon: FileText, activeStyle: { background: "linear-gradient(135deg,#0d47a1,#1565c0)" } },
 ];
 
 function CandidatoSidebar({ activeTab, onTabChange, user, onLogout }) {
   return (
-    <aside className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-50 lg:w-64 lg:overflow-y-auto lg:bg-slate-900 lg:flex lg:flex-col lg:border-r lg:border-slate-800">
-      <div className="flex h-16 shrink-0 items-center gap-2 border-b border-slate-800 px-6">
-        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-purple-500 to-pink-500">
-          <span className="text-xl font-bold text-white">BH</span>
-        </div>
-        <div>
-          <h1 className="text-sm font-bold text-white">Banco Hojas de Vida</h1>
-          <p className="text-xs text-slate-400">Portal Candidato</p>
+    <aside className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-50 lg:w-64 lg:overflow-y-auto lg:flex lg:flex-col lg:border-r"
+      style={{ background: "#0d2a52", borderColor: "#1a3a6b" }}>
+      <div className="flex h-16 shrink-0 items-center border-b px-5" style={{ borderColor: "#1a3a6b" }}>
+        <div className="flex items-center gap-2.5">
+          <div style={{
+              width: 65, height: 65, borderRadius: "14px", flexShrink: 0,
+              background: "linear-gradient(135deg, #64d4f7 0%, #29b6f6 30%, #1565c0 65%, #0d2a52 100%)",
+              padding: 4,
+              boxShadow: "0 0 18px rgba(41,182,246,0.55), 0 3px 12px rgba(0,0,0,0.45)",
+            }}>
+              <div style={{
+                width: "100%", height: "100%", borderRadius: "10px",
+                background: "white", display: "flex", alignItems: "center",
+                justifyContent: "center", overflow: "hidden",
+              }}>
+                <img src="/logo-colba.png" alt="Grupo Colba"
+                  style={{ width: "90%", height: "90%", objectFit: "contain" }} />
+              </div>
+            </div>
+          <div>
+            <p className="text-sm font-bold text-white leading-tight">Colba Empleos</p>
+            <p className="text-xs leading-tight" style={{ color: "#90caf9" }}>Portal Candidato</p>
+          </div>
         </div>
       </div>
-      <nav className="flex flex-1 flex-col gap-2 px-3 py-6">
+      <nav className="flex flex-1 flex-col gap-1.5 px-3 py-5">
         {NAV_ITEMS.map((item) => {
           const Icon = item.icon;
           const isActive = activeTab === item.id;
@@ -49,26 +64,31 @@ function CandidatoSidebar({ activeTab, onTabChange, user, onLogout }) {
               onClick={() => onTabChange(item.id)}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              className={`flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition-all ${
-                isActive ? `bg-gradient-to-r ${item.color} text-white shadow-lg` : "text-slate-300 hover:bg-slate-800 hover:text-white"
-              }`}
+              className="flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition-all text-left"
+              style={isActive
+                ? { ...item.activeStyle, color: "white", boxShadow: "0 2px 8px rgba(21,101,192,0.4)" }
+                : { color: "#90caf9" }
+              }
+              onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.background = "#1a3a6b"; }}
+              onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.background = "transparent"; }}
             >
               <Icon className="h-5 w-5" />
               <span>{item.label}</span>
-              {isActive && <div className="ml-auto h-2 w-2 rounded-full bg-white" />}
+              {isActive && <div className="ml-auto h-2 w-2 rounded-full bg-white opacity-80" />}
             </Motion.button>
           );
         })}
       </nav>
-      <div className="border-t border-slate-800 px-3 py-4 space-y-2">
-        <div className="rounded-lg bg-slate-800 p-3">
+      <div className="border-t px-3 py-4 space-y-2" style={{ borderColor: "#1a3a6b" }}>
+        <div className="rounded-lg p-3" style={{ background: "#1a3a6b" }}>
           <p className="text-xs font-semibold text-white truncate">{user?.nombre}</p>
-          <p className="text-xs text-slate-400 truncate">{user?.email}</p>
+          <p className="text-xs truncate" style={{ color: "#90caf9" }}>{user?.email}</p>
         </div>
-        <button
-          onClick={onLogout}
-          className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-400 hover:bg-slate-800 hover:text-red-400 transition-colors"
-        >
+        <button onClick={onLogout}
+          className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors"
+          style={{ color: "#90caf9" }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = "#1a3a6b"; e.currentTarget.style.color = "#ef4444"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#90caf9"; }}>
           <LogOut className="h-4 w-4" />
           Cerrar sesión
         </button>
@@ -79,19 +99,15 @@ function CandidatoSidebar({ activeTab, onTabChange, user, onLogout }) {
 
 function CandidatoMobileNav({ activeTab, onTabChange }) {
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-slate-200 bg-white lg:hidden">
+    <div className="fixed bottom-0 left-0 right-0 z-40 border-t bg-white lg:hidden" style={{ borderColor: "#e3f2fd" }}>
       <div className="flex justify-around">
         {NAV_ITEMS.map((item) => {
           const Icon = item.icon;
           const isActive = activeTab === item.id;
           return (
-            <button
-              key={item.id}
-              onClick={() => onTabChange(item.id)}
-              className={`flex flex-col items-center gap-1 px-3 py-3 text-xs font-medium transition-all ${
-                isActive ? "text-purple-600" : "text-slate-500 hover:text-slate-700"
-              }`}
-            >
+            <button key={item.id} onClick={() => onTabChange(item.id)}
+              className="flex flex-col items-center gap-1 px-3 py-3 text-xs font-medium transition-all"
+              style={{ color: isActive ? "#1565c0" : "#94a3b8" }}>
               <Icon className="h-5 w-5" />
               <span>{item.label.split(" ")[0]}</span>
             </button>
@@ -102,7 +118,7 @@ function CandidatoMobileNav({ activeTab, onTabChange }) {
   );
 }
 
-// ─── Modal de aplicación ──────────────────────────────────────────────────────
+// --- Modal de aplicación ------------------------------------------------------
 
 function ApplyModal({ vacante, applying, success, error, onApply, onClose }) {
   if (!vacante) return null;
@@ -175,7 +191,7 @@ function ApplyModal({ vacante, applying, success, error, onApply, onClose }) {
   );
 }
 
-// ─── Tarjeta de vacante ───────────────────────────────────────────────────────
+// --- Tarjeta de vacante -------------------------------------------------------
 
 function VacanteCard({ vacante, onApply, index }) {
   const [expanded, setExpanded] = useState(false);
@@ -236,7 +252,7 @@ function VacanteCard({ vacante, onApply, index }) {
   );
 }
 
-// ─── Tab: Buscar Vacantes ─────────────────────────────────────────────────────
+// --- Tab: Buscar Vacantes -----------------------------------------------------
 
 function TabVacantes() {
   const {
@@ -265,7 +281,7 @@ function TabVacantes() {
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
           <Input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Buscar por cargo, ciudad, certificacion..." className="pl-9 pr-9" />
+            placeholder="Buscar por cargo, ciudad, certificación..." className="pl-9 pr-9" />
           {searchQuery && (
             <button onClick={() => setSearchQuery("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
               <X className="h-4 w-4" />
@@ -289,11 +305,11 @@ function TabVacantes() {
             </div>
           ))}
           <div className="space-y-1.5">
-            <Label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Mis anos exp.</Label>
+            <Label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Mis años exp.</Label>
             <select value={filterExperiencia} onChange={(e) => setFilterExperiencia(e.target.value)}
               className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-purple-500">
               <option value="all">Cualquier nivel</option>
-              {["0","1","2","3","5","8","10"].map((v) => <option key={v} value={v}>{v === "0" ? "Sin experiencia" : `${v} anos`}</option>)}
+              {["0","1","2","3","5","8","10"].map((v) => <option key={v} value={v}>{v === "0" ? "Sin experiencia" : `${v} años`}</option>)}
             </select>
           </div>
         </div>
@@ -340,7 +356,7 @@ function TabVacantes() {
   );
 }
 
-// ─── Tab: Mi Perfil ───────────────────────────────────────────────────────────
+// --- Tab: Mi Perfil -----------------------------------------------------------
 
 function TabPerfil({ token }) {
   const [perfil, setPerfil] = useState(null);
@@ -376,7 +392,7 @@ function TabPerfil({ token }) {
 
   const setField = (f, v) => setForm((p) => ({ ...p, [f]: v }));
 
-  // ── Subir CV ────────────────────────────────────────────────────────────────
+  // -- Subir CV ----------------------------------------------------------------
   const handleFileSelect = (file) => {
     if (!file) return;
     if (file.type !== "application/pdf") {
@@ -409,14 +425,14 @@ function TabPerfil({ token }) {
     }
   };
 
-  // ── Analizar CV con IA ──────────────────────────────────────────────────────
-  const handleAnalyze = async () => {
+  // -- Analizar CV con IA ------------------------------------------------------
+  const handleAnalyze = async (useGemini = false) => {
     setAnalyzing(true);
-    setAnalyzeMsg("Leyendo tu hoja de vida...");
+    setAnalyzeMsg(useGemini ? "Enviando a Gemini AI..." : "Leyendo tu hoja de vida...");
     setError("");
     try {
-      setAnalyzeMsg("Analizando con IA, esto puede tomar unos segundos...");
-      const data = await apiAnalizarCvPerfil(token);
+      setAnalyzeMsg(useGemini ? "Gemini está analizando tu CV... (puede tardar hasta 30s)" : "Analizando con IA, esto puede tomar unos segundos...");
+      const data = useGemini ? await apiAnalizarCvPerfilGemini(token) : await apiAnalizarCvPerfil(token);
       setAnalyzeMsg("¡Listo! Revisando los datos extraídos...");
 
       setForm((prev) => ({
@@ -431,7 +447,7 @@ function TabPerfil({ token }) {
         observaciones: data.resumen ? data.resumen.substring(0, 500) : prev.observaciones,
       }));
 
-      setAnalyzeMsg("✅ Formulario completado con los datos del CV. Revisa y guarda.");
+      setAnalyzeMsg(useGemini ? "Formulario completado con Gemini AI. Revisa y guarda." : "Formulario completado con los datos del CV. Revisa y guarda.");
       setTimeout(() => setAnalyzeMsg(""), 5000);
     } catch (err) {
       setError("Error al analizar el CV: " + err.message);
@@ -441,7 +457,7 @@ function TabPerfil({ token }) {
     }
   };
 
-  // ── Guardar perfil ──────────────────────────────────────────────────────────
+  // -- Guardar perfil ----------------------------------------------------------
   const handleSave = async (e) => {
     e.preventDefault();
     setSaving(true);
@@ -478,7 +494,7 @@ function TabPerfil({ token }) {
         </p>
       </div>
 
-      {/* ── Sección CV ── */}
+      {/* -- Sección CV -- */}
       <div className="rounded-2xl border border-slate-200 bg-white p-6 space-y-4 shadow-sm">
         <div className="flex items-center gap-2">
           <FileText className="h-5 w-5 text-teal-600" />
@@ -568,7 +584,7 @@ function TabPerfil({ token }) {
 
           <Button
             type="button"
-            onClick={handleAnalyze}
+            onClick={() => handleAnalyze(false)}
             disabled={analyzing || (!perfil?.cv_path && !cvUploaded)}
             className="gap-2 bg-gradient-to-r from-purple-600 to-violet-700 hover:from-purple-700 hover:to-violet-800 text-white"
           >
@@ -576,6 +592,20 @@ function TabPerfil({ token }) {
               <><Loader2 className="h-4 w-4 animate-spin" />Analizando...</>
             ) : (
               <><Sparkles className="h-4 w-4" />Analizar con IA</>
+            )}
+          </Button>
+
+          <Button
+            type="button"
+            onClick={() => handleAnalyze(true)}
+            disabled={analyzing || (!perfil?.cv_path && !cvUploaded)}
+            className="gap-2 text-white"
+            style={{ background: "linear-gradient(135deg, #1a73e8, #0d47a1)" }}
+          >
+            {analyzing ? (
+              <><Loader2 className="h-4 w-4 animate-spin" />Analizando...</>
+            ) : (
+              <><Sparkles className="h-4 w-4" />Analizar con Gemini</>
             )}
           </Button>
         </div>
@@ -588,12 +618,12 @@ function TabPerfil({ token }) {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
               className={`flex items-start gap-2.5 rounded-lg p-3 text-sm ${
-                analyzeMsg.startsWith("✅")
+                analyzeMsg.startsWith("Formulario")
                   ? "bg-green-50 border border-green-200 text-green-700"
                   : "bg-purple-50 border border-purple-200 text-purple-700"
               }`}
             >
-              {analyzeMsg.startsWith("✅") ? (
+              {analyzeMsg.startsWith("Formulario") ? (
                 <CheckCircle className="h-4 w-4 flex-shrink-0 mt-0.5" />
               ) : (
                 <Loader2 className="h-4 w-4 animate-spin flex-shrink-0 mt-0.5" />
@@ -605,7 +635,7 @@ function TabPerfil({ token }) {
 
         {!perfil?.cv_path && !cvUploaded && (
           <p className="text-xs text-slate-400">
-            💡 Primero sube tu CV y luego usa "Analizar con IA" para completar el formulario automáticamente.
+            Primero sube tu CV y luego usa "Analizar con IA" para completar el formulario automáticamente.
           </p>
         )}
       </div>
@@ -624,7 +654,7 @@ function TabPerfil({ token }) {
         </div>
       )}
 
-      {/* ── Formulario de perfil ── */}
+      {/* -- Formulario de perfil -- */}
       {form && (
         <form onSubmit={handleSave} className="space-y-5">
           <div className="rounded-2xl border border-slate-200 bg-white p-6 space-y-4">
@@ -696,7 +726,7 @@ function TabPerfil({ token }) {
   );
 }
 
-// ─── Tab: Mis Aplicaciones ────────────────────────────────────────────────────
+// --- Tab: Mis Aplicaciones ----------------------------------------------------
 
 const ESTADO_COLORS = {
   "Aplico": "bg-slate-100 text-slate-700",
@@ -738,7 +768,7 @@ function TabMisAplicaciones({ token }) {
         <Card className="p-12 text-center">
           <div className="flex flex-col items-center gap-3 text-slate-500">
             <FileText className="h-10 w-10 text-slate-300" />
-            <p className="font-semibold text-slate-700">Aun no has aplicado a ninguna vacante</p>
+            <p className="font-semibold text-slate-700">Aún no has aplicado a ninguna vacante</p>
             <p className="text-sm">Explora las vacantes disponibles y aplica a las que te interesen.</p>
           </div>
         </Card>
@@ -783,7 +813,7 @@ function TabMisAplicaciones({ token }) {
   );
 }
 
-// ─── Dashboard principal candidato ────────────────────────────────────────────
+// --- Dashboard principal candidato --------------------------------------------
 
 export default function CandidatoDashboard() {
   const { user, token, logout } = useAuth();

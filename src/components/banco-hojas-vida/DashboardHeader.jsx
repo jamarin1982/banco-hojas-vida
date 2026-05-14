@@ -1,23 +1,7 @@
 import { Button } from "@/components/ui/button";
-import { Plus, Settings, Bell, LogOut, User } from "lucide-react";
-import { useAuth } from "@/context/AuthContext";
-import { useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { Plus, Download, Settings, Bell } from "lucide-react";
 
 export function DashboardHeader({ metrics, onNewCandidate, onNewVacante }) {
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
-  const [showUserMenu, setShowUserMenu] = useState(false);
-
-  const handleLogout = () => {
-    logout();
-    navigate("/login", { replace: true });
-  };
-
-  const initials = user?.nombre
-    ? user.nombre.split(" ").map((n) => n[0]).slice(0, 2).join("").toUpperCase()
-    : "U";
-
   return (
     <div className="space-y-4">
       {/* Top Bar */}
@@ -30,7 +14,7 @@ export function DashboardHeader({ metrics, onNewCandidate, onNewVacante }) {
         </div>
 
         {/* Quick Actions */}
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap gap-2">
           <Button
             onClick={onNewCandidate}
             className="gap-2 bg-emerald-600 hover:bg-emerald-700"
@@ -51,54 +35,9 @@ export function DashboardHeader({ metrics, onNewCandidate, onNewVacante }) {
           <Button size="icon" variant="ghost">
             <Bell className="h-5 w-5" />
           </Button>
-
-          {/* User menu */}
-          <div className="relative">
-            <button
-              onClick={() => setShowUserMenu(!showUserMenu)}
-              className="flex items-center gap-2 rounded-lg px-3 py-2 hover:bg-slate-200 transition-colors"
-            >
-              {user?.avatar_url ? (
-                <img
-                  src={user.avatar_url}
-                  alt={user.nombre}
-                  className="h-7 w-7 rounded-full object-cover"
-                />
-              ) : (
-                <div className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-purple-500 to-pink-500 text-xs font-bold text-white">
-                  {initials}
-                </div>
-              )}
-              <span className="hidden sm:block text-sm font-medium text-slate-700 max-w-[120px] truncate">
-                {user?.nombre || "Usuario"}
-              </span>
-            </button>
-
-            {showUserMenu && (
-              <>
-                <div
-                  className="fixed inset-0 z-10"
-                  onClick={() => setShowUserMenu(false)}
-                />
-                <div className="absolute right-0 top-full mt-1 z-20 w-56 rounded-xl bg-white border border-slate-200 shadow-lg py-1 overflow-hidden">
-                  <div className="px-4 py-3 border-b border-slate-100">
-                    <p className="text-sm font-semibold text-slate-900 truncate">{user?.nombre}</p>
-                    <p className="text-xs text-slate-500 truncate">{user?.email}</p>
-                    <span className="inline-block mt-1 text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full font-medium capitalize">
-                      {user?.rol}
-                    </span>
-                  </div>
-                  <button
-                    onClick={handleLogout}
-                    className="flex w-full items-center gap-2.5 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
-                  >
-                    <LogOut className="h-4 w-4" />
-                    Cerrar sesión
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
+          <Button size="icon" variant="ghost">
+            <Settings className="h-5 w-5" />
+          </Button>
         </div>
       </div>
 

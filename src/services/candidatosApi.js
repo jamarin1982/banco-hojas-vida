@@ -96,6 +96,24 @@ export async function analyzeCandidateCv(candidateId) {
   return toJson(response);
 }
 
+export async function analyzeCandidateCvGemini(candidateId) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 90000); // 90s timeout
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/candidatos/${candidateId}/analyze-cv-gemini`, {
+      method: "POST",
+      headers: authHeaders(),
+      signal: controller.signal,
+    });
+    return toJson(response);
+  } catch (err) {
+    if (err.name === "AbortError") throw new Error("Gemini tardó demasiado. Intenta de nuevo.");
+    throw err;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
 export function getCvUrl(cvPath) {
   return `${API_BASE_URL}/${cvPath}`;
 }

@@ -3,11 +3,36 @@ import { BarChart3, Users, UsersRound, Briefcase, Zap } from "lucide-react";
 import { motion as Motion } from "framer-motion";
 
 const SIDEBAR_ITEMS = [
-  { id: "dashboard", label: "Dashboard",            icon: BarChart3,  color: "from-purple-500 to-purple-600" },
-  { id: "talento",   label: "Base de Talento",      icon: Users,      color: "from-blue-500 to-blue-600"    },
-  { id: "registro",  label: "Registrar Candidato",  icon: UsersRound, color: "from-emerald-500 to-emerald-600" },
-  { id: "vacantes",  label: "Gestionar Vacantes",   icon: Briefcase,  color: "from-amber-500 to-amber-600"  },
-  { id: "matching",  label: "Matching Automatico",  icon: Zap,        color: "from-pink-500 to-pink-600"    },
+  {
+    id: "dashboard",
+    label: "Dashboard",
+    icon: BarChart3,
+    color: "from-purple-500 to-purple-600",
+  },
+  {
+    id: "talento",
+    label: "Base de Talento",
+    icon: Users,
+    color: "from-blue-500 to-blue-600",
+  },
+  {
+    id: "registro",
+    label: "Registrar Candidato",
+    icon: UsersRound,
+    color: "from-emerald-500 to-emerald-600",
+  },
+  {
+    id: "vacantes",
+    label: "Gestionar Vacantes",
+    icon: Briefcase,
+    color: "from-amber-500 to-amber-600",
+  },
+  {
+    id: "matching",
+    label: "Matching Automático",
+    icon: Zap,
+    color: "from-pink-500 to-pink-600",
+  },
 ];
 
 export function DashboardSidebar({ activeTab, onTabChange }) {

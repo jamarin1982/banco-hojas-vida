@@ -142,6 +142,38 @@ export async function deleteVacante(id) {
   }
 }
 
+// Postularse a una vacante (candidato autenticado)
+export async function applyToVacante(vacanteId, usuarioId) {
+  try {
+    const [[usuario]] = await pool.query("SELECT candidato_id FROM usuarios WHERE id = ?", [usuarioId]);
+    if (!usuario?.candidato_id) {
+      throw createHttpError(404, "No tienes un perfil de candidato asociado.");
+    }
+
+    const [[existing]] = await pool.query(
+      "SELECT id FROM vacante_candidato_score WHERE vacante_id = ? AND candidato_id = ?",
+      [vacanteId, usuario.candidato_id]
+    );
+    if (existing) {
+      throw createHttpError(409, "Ya te has postulado a esta vacante.");
+    }
+
+    const now = new Date().toISOString();
+    await pool.query(
+      `INSERT INTO vacante_candidato_score (vacante_id, candidato_id, score_total, score_experiencia, score_certificaciones, score_ubicacion, score_disponibilidad, estado_aplicacion, fecha_score)
+       VALUES (?, ?, 0, 0, 0, 0, 0, 'Aplicó', ?)`,
+      [vacanteId, usuario.candidato_id, now]
+    );
+
+    logger.info(`Candidato ${usuario.candidato_id} postulado a vacante ${vacanteId}`);
+    return { message: "Te has postulado exitosamente a la vacante." };
+  } catch (error) {
+    if (error.status) throw error;
+    logger.error(`Error postulando a vacante ${vacanteId}:`, error);
+    throw error;
+  }
+}
+
 // Matching automático
 export async function calculateMatchingScores(vacanteId) {
   try {
@@ -248,94 +280,6 @@ export async function getTopCandidatesForVacante(vacanteId, limit = 10) {
     return scores;
   } catch (error) {
     logger.error(`Error obteniendo candidatos para vacante ${vacanteId}:`, error);
-    throw error;
-  }
-}
-
-// Aplicar candidato a una vacante (usuario autenticado con rol candidato)
-export async function applyToVacante(vacanteId, usuarioId) {
-  try {
-    const now = new Date().toISOString();
-
-    // Verificar vacante activa
-    const [[vacante]] = await pool.query(
-      "SELECT id, estado FROM vacantes WHERE id = ?",
-      [vacanteId]
-    );
-    if (!vacante) throw createHttpError(404, "Vacante no encontrada");
-    if (vacante.estado !== "Activa") {
-      throw createHttpError(400, "Esta vacante no está disponible para aplicaciones");
-    }
-
-    // Obtener candidato_id del usuario
-    const [[usuario]] = await pool.query(
-      "SELECT candidato_id FROM usuarios WHERE id = ?",
-      [usuarioId]
-    );
-    if (!usuario?.candidato_id) {
-      throw createHttpError(400, "No tienes un perfil de candidato completo para aplicar.");
-    }
-
-    const candidatoId = usuario.candidato_id;
-
-    // Verificar si ya aplicó
-    const [[yaAplico]] = await pool.query(
-      "SELECT id FROM vacante_candidato_score WHERE vacante_id = ? AND candidato_id = ? AND estado_aplicacion = 'Aplicó'",
-      [vacanteId, candidatoId]
-    );
-    if (yaAplico) {
-      throw createHttpError(409, "Ya aplicaste a esta vacante anteriormente.");
-    }
-
-    // Obtener datos del candidato para calcular score
-    const [[candidato]] = await pool.query("SELECT * FROM candidatos WHERE id = ?", [candidatoId]);
-    const vacanteCompleta = await getVacanteById(vacanteId);
-
-    const scoreExperiencia = calculateExperienceScore(
-      candidato.experiencia,
-      vacanteCompleta.experiencia_minima,
-      vacanteCompleta.experiencia_maxima
-    );
-    const scoreCertificaciones = calculateCertificationsScore(
-      candidato.certificaciones || "",
-      vacanteCompleta.certificaciones_requeridas || []
-    );
-    const scoreUbicacion = candidato.ciudad === vacanteCompleta.ciudad ? 100 : 40;
-    const scoreDisponibilidad = candidato.disponibilidad === vacanteCompleta.disponibilidad ? 100 : 70;
-    const scoreTotal = Math.round(
-      scoreExperiencia * 0.35 +
-        scoreCertificaciones * 0.35 +
-        scoreUbicacion * 0.15 +
-        scoreDisponibilidad * 0.15
-    );
-
-    await pool.query(
-      `INSERT INTO vacante_candidato_score
-       (vacante_id, candidato_id, score_total, score_experiencia, score_certificaciones,
-        score_ubicacion, score_disponibilidad, estado_aplicacion, fecha_score)
-       VALUES (?, ?, ?, ?, ?, ?, ?, 'Aplicó', ?)
-       ON DUPLICATE KEY UPDATE
-         score_total = ?, score_experiencia = ?, score_certificaciones = ?,
-         score_ubicacion = ?, score_disponibilidad = ?,
-         estado_aplicacion = 'Aplicó', fecha_score = ?`,
-      [
-        vacanteId, candidatoId, scoreTotal, scoreExperiencia, scoreCertificaciones,
-        scoreUbicacion, scoreDisponibilidad, now,
-        scoreTotal, scoreExperiencia, scoreCertificaciones,
-        scoreUbicacion, scoreDisponibilidad, now,
-      ]
-    );
-
-    // Actualizar estado del candidato
-    await pool.query(
-      "UPDATE candidatos SET estado = 'Aplicó', fecha_actualizacion = ? WHERE id = ?",
-      [now, candidatoId]
-    );
-
-    logger.info(`Candidato ${candidatoId} aplicó a vacante ${vacanteId} con score ${scoreTotal}`);
-    return { candidatoId, scoreTotal };
-  } catch (error) {
-    logger.error(`Error aplicando a vacante ${vacanteId}:`, error);
     throw error;
   }
 }

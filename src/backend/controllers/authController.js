@@ -12,31 +12,53 @@ import {
 } from "../services/authService.js";
 import { readCvPdf } from "../utils/readCvPdf.js";
 import { analyzeCv } from "../utils/cvAnalyzer.js";
+import { analyzeCvWithGemini } from "../utils/cvGemini.js";
 
 export async function registerHandler(req, res, next) {
   try {
     const { nombre, email, password, rol, nombreEmpresa } = req.body;
+    const rolEfectivo = rol || "candidato";
 
     if (!nombre?.trim() || !email?.trim() || !password) {
+      // Si multer subió un archivo pero hay error de validación, eliminarlo
+      if (req.file) {
+        const fs = await import("fs/promises");
+        await fs.unlink(req.file.path).catch(() => {});
+      }
       return res.status(400).json({ error: "Nombre, email y contraseña son obligatorios." });
     }
     if (password.length < 8) {
+      if (req.file) { const fs = await import("fs/promises"); await fs.unlink(req.file.path).catch(() => {}); }
       return res.status(400).json({ error: "La contraseña debe tener al menos 8 caracteres." });
     }
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
+      if (req.file) { const fs = await import("fs/promises"); await fs.unlink(req.file.path).catch(() => {}); }
       return res.status(400).json({ error: "El formato del email no es válido." });
+    }
+
+    // CV obligatorio para candidatos
+    if (rolEfectivo === "candidato" && !req.file) {
+      return res.status(400).json({
+        error: "Debes adjuntar tu hoja de vida (PDF, ODT, DOC o DOCX) para registrarte como candidato.",
+      });
     }
 
     const result = await registerUser({
       nombre: nombre.trim(),
       email: email.trim().toLowerCase(),
       password,
-      rol: rol || "candidato",
+      rol: rolEfectivo,
       nombreEmpresa,
+      cvPath: req.file?.path || null,
     });
     res.status(201).json(result);
   } catch (err) {
+    // Limpiar archivo si el registro falló
+    if (req.file) {
+      const fs = await import("fs/promises");
+      await fs.unlink(req.file.path).catch(() => {});
+    }
     next(err);
   }
 }
@@ -145,6 +167,17 @@ export async function analizarCvPerfilHandler(req, res, next) {
     const cvPath = await analizarCvCandidato(req.user.id);
     const text = await readCvPdf(cvPath);
     const analysis = await analyzeCv(text);
+    res.json(analysis);
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function analizarCvPerfilGeminiHandler(req, res, next) {
+  try {
+    const cvPath = await analizarCvCandidato(req.user.id);
+    const text = await readCvPdf(cvPath);
+    const analysis = await analyzeCvWithGemini(text);
     res.json(analysis);
   } catch (err) {
     next(err);

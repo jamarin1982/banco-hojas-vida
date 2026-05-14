@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 600" fill="none">
+  <defs>
+    <!-- Triángulo superior-izquierdo: azul oscuro -->
+    <linearGradient id="tl" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1a4a8a"/>
+      <stop offset="100%" stop-color="#0d2d5e"/>
+    </linearGradient>
+    <!-- Triángulo superior-derecho: azul claro/cyan -->
+    <linearGradient id="tr" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#5bb8e8"/>
+      <stop offset="100%" stop-color="#2e8fc8"/>
+    </linearGradient>
+    <!-- Triángulo inferior-izquierdo: azul claro -->
+    <linearGradient id="bl" x1="100%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#4aaee0"/>
+      <stop offset="100%" stop-color="#1e6faa"/>
+    </linearGradient>
+    <!-- Triángulo inferior-derecho: azul medio -->
+    <linearGradient id="br" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2e8fc8"/>
+      <stop offset="100%" stop-color="#1a5a9a"/>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="6" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+  </defs>
+
+  <!-- ── Rombo superior (mitad de arriba) ── -->
+  <!-- Superior-izquierdo: oscuro -->
+  <polygon points="250,30 30,250 250,250" fill="url(#tl)"/>
+  <!-- Superior-derecho: claro -->
+  <polygon points="250,30 470,250 250,250" fill="url(#tr)"/>
+
+  <!-- ── Rombo inferior (mitad de abajo) ── -->
+  <!-- Inferior-izquierdo: claro -->
+  <polygon points="30,250 250,470 250,250" fill="url(#bl)"/>
+  <!-- Inferior-derecho: medio -->
+  <polygon points="470,250 250,470 250,250" fill="url(#br)"/>
+
+  <!-- Línea vertical divisoria -->
+  <line x1="250" y1="30" x2="250" y2="470" stroke="#071828" stroke-width="3"/>
+  <!-- Línea horizontal divisoria -->
+  <line x1="30" y1="250" x2="470" y2="250" stroke="#071828" stroke-width="3"/>
+
+  <!-- Borde exterior del rombo -->
+  <polygon points="250,30 470,250 250,470 30,250" fill="none" stroke="#1a4a8a" stroke-width="2"/>
+
+  <!-- ── Texto GRUPO COLBA ── -->
+  <!-- Línea superior del texto -->
+  <line x1="10" y1="310" x2="490" y2="310" stroke="#1a4a8a" stroke-width="1.5"/>
+  <!-- Línea inferior del texto -->
+  <line x1="10" y1="370" x2="490" y2="370" stroke="#1a4a8a" stroke-width="1.5"/>
+
+  <!-- Texto -->
+  <text
+    x="250"
+    y="355"
+    text-anchor="middle"
+    font-family="Arial, Helvetica, sans-serif"
+    font-size="72"
+    font-weight="bold"
+    font-style="italic"
+    letter-spacing="4"
+    fill="#1a4a8a"
+  >GRUPO COLBA</text>
+</svg>

@@ -13,18 +13,28 @@ import { requireAuth, requireRole } from "../middlewares/requireAuth.js";
 
 const router = Router();
 
-// ─── Públicas (cualquiera puede ver vacantes activas) ─────────────────────────
+// Listar todas las vacantes con filtro opcional de estado
 router.get("/", listVacantes);
+
+// Obtener vacante por ID
 router.get("/:id", listVacanteById);
 
-// ─── Solo empresa ─────────────────────────────────────────────────────────────
-router.post("/", requireAuth, requireRole("empresa"), createVacanteHandler);
-router.put("/:id", requireAuth, requireRole("empresa"), updateVacanteHandler);
-router.delete("/:id", requireAuth, requireRole("empresa"), deleteVacanteHandler);
-router.get("/:id/candidatos", requireAuth, requireRole("empresa"), getTopCandidatesHandler);
-router.post("/:id/matching/recalcular", requireAuth, requireRole("empresa"), recalculateMatchingHandler);
+// Crear nueva vacante
+router.post("/", createVacanteHandler);
 
-// ─── Candidatos autenticados pueden aplicar ───────────────────────────────────
+// Actualizar vacante
+router.put("/:id", updateVacanteHandler);
+
+// Eliminar vacante
+router.delete("/:id", deleteVacanteHandler);
+
+// Obtener top candidatos para una vacante
+router.get("/:id/candidatos", getTopCandidatesHandler);
+
+// Recalcular matching para una vacante
+router.post("/:id/matching/recalcular", recalculateMatchingHandler);
+
+// Postularse a una vacante (candidato autenticado)
 router.post("/:id/aplicar", requireAuth, requireRole("candidato"), applyToVacanteHandler);
 
 export default router;
