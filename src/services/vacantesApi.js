@@ -74,3 +74,17 @@ export async function applyToVacante(vacanteId, token) {
   }
   return await response.json();
 }
+
+// Generar perfil de vacante con IA
+export async function generateVacantePerfil({ descripcion, titulo, cargo, ciudad }) {
+  const response = await fetch(`${API_URL}/vacantes/generar-perfil`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ descripcion, titulo, cargo, ciudad }),
+  });
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    throw new Error(data.error || "Error generando perfil con IA");
+  }
+  return await response.json();
+}

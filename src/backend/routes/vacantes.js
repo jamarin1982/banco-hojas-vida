@@ -8,6 +8,7 @@ import {
   getTopCandidatesHandler,
   recalculateMatchingHandler,
   applyToVacanteHandler,
+  generarPerfilVacanteHandler,
 } from "../controllers/vacantesController.js";
 import { requireAuth, requireRole } from "../middlewares/requireAuth.js";
 
@@ -21,6 +22,9 @@ router.get("/:id", listVacanteById);
 
 // Crear nueva vacante
 router.post("/", createVacanteHandler);
+
+// Generar perfil de vacante con IA (antes de guardar)
+router.post("/generar-perfil", generarPerfilVacanteHandler);
 
 // Actualizar vacante
 router.put("/:id", updateVacanteHandler);
