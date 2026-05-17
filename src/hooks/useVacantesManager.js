@@ -90,11 +90,11 @@ export function useVacantesManager() {
       // Guardar preguntas
       if (token && preguntasData.length > 0) {
         for (const p of preguntasData) {
-          if (p.id && !p.id.toString().startsWith("temp-")) {
-            // Pregunta existente - actualizar
+          // Si el ID es un número, es una pregunta existente en BD.
+          // Si es string (UUID generado por IA), es una pregunta nueva.
+          if (p.id && typeof p.id === 'number') {
             await apiUpdatePregunta(token, p.id, { tipo: p.tipo, pregunta: p.pregunta, orden: p.orden });
           } else {
-            // Pregunta nueva - crear
             await apiCreatePregunta(token, vacanteId, { tipo: p.tipo, pregunta: p.pregunta, orden: p.orden });
           }
         }
