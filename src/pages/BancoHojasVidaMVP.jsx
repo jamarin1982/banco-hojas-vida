@@ -64,6 +64,7 @@ export default function BancoHojasVidaMVP() {
     handleSelectVacante,
     handleNewVacante,
     preguntas,
+    setPreguntas,
   } = useVacantesManager();
 
   const [notification, setNotification] = useState(null);
@@ -278,6 +279,7 @@ export default function BancoHojasVidaMVP() {
                   onCancel={handleNewVacante}
                   isLoading={vacanteLoading}
                   preguntas={preguntas}
+                  setPreguntas={setPreguntas}
                 />
               </div>
             </div>

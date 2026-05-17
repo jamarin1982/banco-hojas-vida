@@ -111,21 +111,21 @@ Responde SOLO con el JSON válido, sin explicaciones adicionales.`;
     // Procesar informativas
     if (Array.isArray(parsed.informativas)) {
       parsed.informativas.forEach((p, i) => {
-        if (p.pregunta) preguntas.push({ tipo: "informativa", pregunta: p.pregunta, orden: i + 1 });
+        if (p.pregunta) preguntas.push({ id: crypto.randomUUID(), tipo: "informativa", pregunta: p.pregunta, orden: i + 1 });
       });
     }
 
     // Procesar calificatorias
     if (Array.isArray(parsed.calificatorias)) {
       parsed.calificatorias.forEach((p, i) => {
-        if (p.pregunta) preguntas.push({ tipo: "calificatoria", pregunta: p.pregunta, orden: i + 1 });
+        if (p.pregunta) preguntas.push({ id: crypto.randomUUID(), tipo: "calificatoria", pregunta: p.pregunta, orden: i + 1 });
       });
     }
 
     // Procesar excluyentes
     if (Array.isArray(parsed.excluyentes)) {
       parsed.excluyentes.forEach((p, i) => {
-        if (p.pregunta) preguntas.push({ tipo: "excluyente", pregunta: p.pregunta, orden: i + 1 });
+        if (p.pregunta) preguntas.push({ id: crypto.randomUUID(), tipo: "excluyente", pregunta: p.pregunta, orden: i + 1 });
       });
     }
 
