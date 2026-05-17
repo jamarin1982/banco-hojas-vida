@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { BarChart3, Users, UsersRound, Briefcase, Zap } from "lucide-react";
+import { BarChart3, Users, UsersRound, Briefcase, Zap, LogOut } from "lucide-react";
 import { motion as Motion } from "framer-motion";
 
 const SIDEBAR_ITEMS = [
@@ -35,17 +35,17 @@ const SIDEBAR_ITEMS = [
   },
 ];
 
-export function DashboardSidebar({ activeTab, onTabChange }) {
+export function DashboardSidebar({ activeTab, onTabChange, user, onLogout }) {
   return (
-    <aside className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-50 lg:w-64 lg:overflow-y-auto lg:bg-slate-900 lg:flex lg:flex-col lg:border-r lg:border-slate-800">
+    <aside className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-50 lg:w-64 lg:overflow-y-auto lg:bg-gradient-to-b lg:from-teal-900 lg:to-slate-900 lg:flex lg:flex-col lg:border-r lg:border-teal-800">
       {/* Logo */}
-      <div className="flex h-16 shrink-0 items-center gap-2 border-b border-slate-800 px-6">
-        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-purple-500 to-pink-500">
-          <span className="text-xl font-bold text-white">BH</span>
+      <div className="flex h-16 shrink-0 items-center gap-3 border-b border-teal-800 px-5">
+        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white overflow-hidden">
+          <img src="/logo-colba.png" alt="Colba Empleos" className="h-8 w-8 object-contain" />
         </div>
         <div>
-          <h1 className="text-sm font-bold text-white">Banco Hojas Vida</h1>
-          <p className="text-xs text-slate-400">Gestión de Talento</p>
+          <h1 className="text-sm font-bold text-white">Colba Empleos</h1>
+          <p className="text-xs text-teal-300">Portal Reclutador</p>
         </div>
       </div>
 
@@ -64,7 +64,7 @@ export function DashboardSidebar({ activeTab, onTabChange }) {
               className={`flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition-all ${
                 isActive
                   ? `bg-gradient-to-r ${item.color} text-white shadow-lg`
-                  : "text-slate-300 hover:bg-slate-800 hover:text-white"
+                  : "text-teal-200 hover:bg-teal-800/50 hover:text-white"
               }`}
             >
               <Icon className="h-5 w-5" />
@@ -75,24 +75,27 @@ export function DashboardSidebar({ activeTab, onTabChange }) {
         })}
       </nav>
 
-      {/* Footer Info */}
-      <div className="border-t border-slate-800 px-3 py-4">
-        <div className="rounded-lg bg-slate-800 p-3 text-xs text-slate-300">
-          <p className="font-semibold text-white mb-1">💡 Tips</p>
-          <ul className="space-y-1 text-slate-400 text-xs">
-            <li>• Carga CVs para análisis automático</li>
-            <li>• Crea vacantes para matching</li>
-            <li>• Filtra por ciudad o cargo</li>
-          </ul>
+      {/* User Info & Logout */}
+      <div className="border-t border-teal-800 px-3 py-4 space-y-3">
+        <div className="rounded-lg bg-teal-800/50 p-3">
+          <p className="text-sm font-semibold text-white truncate">{user?.nombre}</p>
+          <p className="text-xs text-teal-300 truncate">{user?.email}</p>
         </div>
+        <button
+          onClick={onLogout}
+          className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-teal-300 hover:bg-teal-800/50 hover:text-red-400 transition-colors"
+        >
+          <LogOut className="h-4 w-4" />
+          Cerrar sesión
+        </button>
       </div>
     </aside>
   );
 }
 
-export function DashboardMobileNav({ activeTab, onTabChange }) {
+export function DashboardMobileNav({ activeTab, onTabChange, user, onLogout }) {
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-slate-200 bg-white lg:hidden">
+    <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-teal-200 bg-white lg:hidden">
       <div className="flex justify-around">
         {SIDEBAR_ITEMS.map((item) => {
           const Icon = item.icon;
@@ -104,7 +107,7 @@ export function DashboardMobileNav({ activeTab, onTabChange }) {
               onClick={() => onTabChange(item.id)}
               className={`flex flex-col items-center gap-1 px-3 py-3 text-xs font-medium transition-all ${
                 isActive
-                  ? "text-purple-600"
+                  ? "text-teal-600"
                   : "text-slate-500 hover:text-slate-700"
               }`}
             >
@@ -113,6 +116,16 @@ export function DashboardMobileNav({ activeTab, onTabChange }) {
             </button>
           );
         })}
+      </div>
+      {/* Mobile user bar */}
+      <div className="flex items-center justify-between border-t border-teal-100 px-4 py-2">
+        <div className="min-w-0">
+          <p className="text-xs font-semibold text-slate-900 truncate">{user?.nombre}</p>
+          <p className="text-xs text-slate-500 truncate">{user?.email}</p>
+        </div>
+        <button onClick={onLogout} className="text-slate-400 hover:text-red-500 p-2">
+          <LogOut className="h-4 w-4" />
+        </button>
       </div>
     </div>
   );

@@ -13,8 +13,18 @@ import { useVacantesManager } from "@/hooks/useVacantesManager";
 import { TalentTab } from "@/components/banco-hojas-vida/TalentTab";
 import { AlertCircle, CheckCircle, AlertTriangle } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/context/AuthContext";
 
 export default function BancoHojasVidaMVP() {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate("/login", { replace: true });
+  };
+
   const {
     activeTab,
     setActiveTab,
@@ -98,10 +108,10 @@ export default function BancoHojasVidaMVP() {
   }, [analyzeProgress]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-slate-50 to-blue-50 lg:pl-64">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-teal-50/30 to-slate-50 lg:pl-64">
       {/* Sidebar */}
-      <DashboardSidebar activeTab={activeTab} onTabChange={setActiveTab} />
-      <DashboardMobileNav activeTab={activeTab} onTabChange={setActiveTab} />
+      <DashboardSidebar activeTab={activeTab} onTabChange={setActiveTab} user={user} onLogout={handleLogout} />
+      <DashboardMobileNav activeTab={activeTab} onTabChange={setActiveTab} user={user} onLogout={handleLogout} />
 
       {/* Notificación flotante */}
       {notification && (
@@ -157,55 +167,55 @@ export default function BancoHojasVidaMVP() {
           <TabsContent value="dashboard" className="space-y-6">
             <div className="grid gap-6 lg:grid-cols-2">
               {/* Stats Summary */}
-              <div className="space-y-4 rounded-2xl bg-white p-6 border border-slate-200">
-                <h3 className="text-lg font-bold text-slate-900">📈 Resumen</h3>
+              <div className="space-y-4 rounded-2xl bg-white p-6 border border-teal-200">
+                <h3 className="text-lg font-bold text-teal-900">Resumen</h3>
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between p-3 rounded-lg bg-slate-50">
-                    <span className="text-sm text-slate-600">Total Candidatos</span>
-                    <span className="text-2xl font-bold text-slate-900">{metrics.total}</span>
+                  <div className="flex items-center justify-between p-3 rounded-lg bg-teal-50">
+                    <span className="text-sm text-teal-700">Total Candidatos</span>
+                    <span className="text-2xl font-bold text-teal-900">{metrics.total}</span>
                   </div>
-                  <div className="flex items-center justify-between p-3 rounded-lg bg-green-50">
-                    <span className="text-sm text-slate-600">Disponibles Inmediatamente</span>
-                    <span className="text-2xl font-bold text-green-600">{metrics.inmediatos}</span>
+                  <div className="flex items-center justify-between p-3 rounded-lg bg-emerald-50">
+                    <span className="text-sm text-emerald-700">Disponibles Inmediatamente</span>
+                    <span className="text-2xl font-bold text-emerald-600">{metrics.inmediatos}</span>
                   </div>
-                  <div className="flex items-center justify-between p-3 rounded-lg bg-purple-50">
-                    <span className="text-sm text-slate-600">Aprobados</span>
-                    <span className="text-2xl font-bold text-purple-600">{metrics.aprobados}</span>
+                  <div className="flex items-center justify-between p-3 rounded-lg bg-sky-50">
+                    <span className="text-sm text-sky-700">Aprobados</span>
+                    <span className="text-2xl font-bold text-sky-600">{metrics.aprobados}</span>
                   </div>
-                  <div className="flex items-center justify-between p-3 rounded-lg bg-blue-50">
-                    <span className="text-sm text-slate-600">Score Promedio</span>
-                    <span className="text-2xl font-bold text-blue-600">{metrics.promedio}%</span>
+                  <div className="flex items-center justify-between p-3 rounded-lg bg-amber-50">
+                    <span className="text-sm text-amber-700">Score Promedio</span>
+                    <span className="text-2xl font-bold text-amber-600">{metrics.promedio}%</span>
                   </div>
                 </div>
               </div>
 
               {/* Quick Actions */}
-              <div className="space-y-4 rounded-2xl bg-white p-6 border border-slate-200">
-                <h3 className="text-lg font-bold text-slate-900">🚀 Acciones Rápidas</h3>
+              <div className="space-y-4 rounded-2xl bg-white p-6 border border-teal-200">
+                <h3 className="text-lg font-bold text-teal-900">Acciones Rápidas</h3>
                 <div className="space-y-2 text-sm">
                   <button
                     onClick={() => setActiveTab("registro")}
-                    className="w-full p-3 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-medium transition-colors text-left"
+                    className="w-full p-3 rounded-lg bg-teal-50 hover:bg-teal-100 text-teal-700 font-medium transition-colors text-left"
                   >
-                    ➕ Registrar nuevo candidato
+                    Registrar nuevo candidato
                   </button>
                   <button
                     onClick={() => setActiveTab("vacantes")}
-                    className="w-full p-3 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-700 font-medium transition-colors text-left"
+                    className="w-full p-3 rounded-lg bg-sky-50 hover:bg-sky-100 text-sky-700 font-medium transition-colors text-left"
                   >
-                    💼 Crear nueva vacante
+                    Crear nueva vacante
                   </button>
                   <button
                     onClick={() => setActiveTab("matching")}
-                    className="w-full p-3 rounded-lg bg-pink-50 hover:bg-pink-100 text-pink-700 font-medium transition-colors text-left"
+                    className="w-full p-3 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-medium transition-colors text-left"
                   >
-                    🎯 Ver matching de vacantes
+                    Ver matching de vacantes
                   </button>
                   <button
                     onClick={() => setActiveTab("talento")}
-                    className="w-full p-3 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 font-medium transition-colors text-left"
+                    className="w-full p-3 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-700 font-medium transition-colors text-left"
                   >
-                    📊 Explorar base de talento
+                    Explorar base de talento
                   </button>
                 </div>
               </div>
@@ -236,7 +246,7 @@ export default function BancoHojasVidaMVP() {
 
           {/* Tab: Registro */}
           <TabsContent value="registro">
-            <div className="rounded-2xl bg-white p-6 shadow-sm border border-slate-200">
+            <div className="rounded-2xl bg-white p-6 shadow-sm border border-teal-200">
               <CandidateForm
                 form={form}
                 setForm={setForm}
@@ -259,7 +269,7 @@ export default function BancoHojasVidaMVP() {
                   isLoading={vacanteLoading}
                 />
               </div>
-              <div className="lg:col-span-2 rounded-2xl bg-white p-6 shadow-sm border border-slate-200">
+              <div className="lg:col-span-2 rounded-2xl bg-white p-6 shadow-sm border border-teal-200">
                 <VacanteForm
                   form={vacanteForm}
                   setForm={setVacanteForm}
@@ -273,7 +283,7 @@ export default function BancoHojasVidaMVP() {
 
           {/* Tab: Matching */}
           <TabsContent value="matching">
-            <div className="rounded-2xl bg-white p-6 shadow-sm border border-slate-200">
+            <div className="rounded-2xl bg-white p-6 shadow-sm border border-teal-200">
               <VacanteMatchingPanel vacante={selectedVacante} topCandidates={topCandidates} />
             </div>
           </TabsContent>
