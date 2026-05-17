@@ -132,7 +132,7 @@ export function useVacantesManager() {
     setSelectedVacante(vacante);
     setForm(vacante);
     // Cargar preguntas de la vacante seleccionada
-    if (token) {
+    if (token && vacante?.id) {
       try {
         const data = await apiGetPreguntas(vacante.id);
         setPreguntas(data);
@@ -140,6 +140,8 @@ export function useVacantesManager() {
         console.error("Error cargando preguntas:", err);
         setPreguntas([]);
       }
+    } else {
+      setPreguntas([]);
     }
   };
 
