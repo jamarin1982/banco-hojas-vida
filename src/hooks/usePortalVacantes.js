@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { fetchVacantes, applyToVacante } from "@/services/vacantesApi";
+import { apiGetPreguntas, apiSaveRespuestas } from "@/services/preguntasApi";
 import { useAuth } from "@/context/AuthContext";
 
 export function usePortalVacantes() {
@@ -22,6 +23,10 @@ export function usePortalVacantes() {
   const [applying, setApplying] = useState(false);
   const [applySuccess, setApplySuccess] = useState(false);
   const [applyError, setApplyError] = useState(null);
+
+  // Preguntas de la vacante seleccionada
+  const [preguntas, setPreguntas] = useState([]);
+  const [respuestas, setRespuestas] = useState({});
 
   useEffect(() => {
     loadVacantes();
@@ -69,22 +74,49 @@ export function usePortalVacantes() {
     });
   }, [vacantes, searchQuery, filterCiudad, filterCargo, filterJornada, filterDisponibilidad, filterExperiencia]);
 
-  const openApplyModal = (vacante) => {
+  const openApplyModal = async (vacante) => {
     setSelectedVacante(vacante);
     setApplySuccess(false);
     setApplyError(null);
+    setRespuestas({});
+
+    // Cargar preguntas de la vacante
+    try {
+      const data = await apiGetPreguntas(vacante.id);
+      setPreguntas(data);
+    } catch (err) {
+      console.error("Error cargando preguntas:", err);
+      setPreguntas([]);
+    }
   };
 
   const closeApplyModal = () => {
     setSelectedVacante(null);
     setApplySuccess(false);
     setApplyError(null);
+    setPreguntas([]);
+    setRespuestas({});
   };
 
-  const handleApply = async () => {
+  const handleApply = async (candidatoId) => {
     try {
       setApplying(true);
       setApplyError(null);
+
+      // Guardar respuestas a preguntas si hay
+      if (preguntas.length > 0 && candidatoId) {
+        const respuestasArray = preguntas
+          .filter((p) => respuestas[p.id])
+          .map((p) => ({
+            preguntaId: p.id,
+            respuesta: respuestas[p.id],
+          }));
+
+        if (respuestasArray.length > 0) {
+          await apiSaveRespuestas(candidatoId, selectedVacante.id, respuestasArray);
+        }
+      }
+
       await applyToVacante(selectedVacante.id, token);
       setApplySuccess(true);
     } catch (err) {
@@ -120,5 +152,7 @@ export function usePortalVacantes() {
     selectedVacante,
     applying, applySuccess, applyError,
     openApplyModal, closeApplyModal, handleApply,
+    preguntas,
+    respuestas, setRespuestas,
   };
 }

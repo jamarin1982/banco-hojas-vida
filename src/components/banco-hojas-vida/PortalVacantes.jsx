@@ -21,12 +21,16 @@ import {
 } from "lucide-react";
 import { motion as Motion, AnimatePresence } from "framer-motion";
 import { usePortalVacantes } from "@/hooks/usePortalVacantes";
+import { useAuth } from "@/context/AuthContext";
 import { useState } from "react";
 
 // ─── Modal de Aplicación ────────────────────────────────────────────────────
 
-function ApplyModal({ vacante, form, setForm, applying, success, error, onApply, onClose }) {
+function ApplyModal({ vacante, form, setForm, applying, success, error, onApply, onClose, preguntas, respuestas, setRespuestas, candidatoId }) {
   const setField = (field, value) => setForm((prev) => ({ ...prev, [field]: value }));
+  const setRespuesta = (preguntaId, value) => setRespuestas((prev) => ({ ...prev, [preguntaId]: value }));
+
+  const getPreguntasByTipo = (tipo) => preguntas.filter((p) => p.tipo === tipo);
 
   if (!vacante) return null;
 
@@ -209,6 +213,89 @@ function ApplyModal({ vacante, form, setForm, applying, success, error, onApply,
                   rows={3}
                 />
               </div>
+
+              {/* Preguntas de la vacante */}
+              {preguntas.length > 0 && (
+                <div className="space-y-5">
+                  <h3 className="font-semibold text-slate-900 text-sm uppercase tracking-wide border-b border-slate-200 pb-2">
+                    Preguntas de la vacante
+                  </h3>
+
+                  {/* Informativas */}
+                  {getPreguntasByTipo("informativa").length > 0 && (
+                    <div className="space-y-3">
+                      <p className="text-xs font-semibold text-blue-600 uppercase flex items-center gap-1">
+                        💬 Informativas
+                      </p>
+                      {getPreguntasByTipo("informativa").map((p) => (
+                        <div key={p.id} className="space-y-1.5">
+                          <Label className="text-sm font-medium text-slate-700">{p.pregunta}</Label>
+                          <Input
+                            value={respuestas[p.id] || ""}
+                            onChange={(e) => setRespuesta(p.id, e.target.value)}
+                            placeholder="Tu respuesta..."
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Calificatorias */}
+                  {getPreguntasByTipo("calificatoria").length > 0 && (
+                    <div className="space-y-3">
+                      <p className="text-xs font-semibold text-amber-600 uppercase flex items-center gap-1">
+                        ⭐ Calificatorias
+                      </p>
+                      {getPreguntasByTipo("calificatoria").map((p) => (
+                        <div key={p.id} className="space-y-1.5">
+                          <Label className="text-sm font-medium text-slate-700">{p.pregunta}</Label>
+                          <Input
+                            value={respuestas[p.id] || ""}
+                            onChange={(e) => setRespuesta(p.id, e.target.value)}
+                            placeholder="Tu respuesta..."
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Excluyentes */}
+                  {getPreguntasByTipo("excluyente").length > 0 && (
+                    <div className="space-y-3">
+                      <p className="text-xs font-semibold text-red-600 uppercase flex items-center gap-1">
+                        🚫 Excluyentes
+                      </p>
+                      {getPreguntasByTipo("excluyente").map((p) => (
+                        <div key={p.id} className="space-y-1.5">
+                          <Label className="text-sm font-medium text-slate-700">{p.pregunta}</Label>
+                          <div className="flex gap-3">
+                            {["Sí", "No"].map((opcion) => (
+                              <label
+                                key={opcion}
+                                className={`flex items-center gap-2 px-4 py-2 rounded-lg border cursor-pointer transition-colors ${
+                                  respuestas[p.id] === opcion
+                                    ? "border-red-500 bg-red-50 text-red-700"
+                                    : "border-slate-200 hover:border-slate-300"
+                                }`}
+                              >
+                                <input
+                                  type="radio"
+                                  name={`pregunta-${p.id}`}
+                                  value={opcion}
+                                  checked={respuestas[p.id] === opcion}
+                                  onChange={() => setRespuesta(p.id, opcion)}
+                                  className="sr-only"
+                                />
+                                <span className="text-sm font-medium">{opcion}</span>
+                              </label>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Acciones */}
               <div className="flex gap-3 justify-end pt-2">
@@ -529,7 +616,12 @@ export function PortalVacantes() {
     applyForm, setApplyForm,
     applying, applySuccess, applyError,
     openApplyModal, closeApplyModal, handleApply,
+    preguntas,
+    respuestas, setRespuestas,
   } = usePortalVacantes();
+
+  const { user } = useAuth();
+  const candidatoId = user?.candidato_id;
 
   return (
     <div className="space-y-6">
@@ -637,8 +729,12 @@ export function PortalVacantes() {
             applying={applying}
             success={applySuccess}
             error={applyError}
-            onApply={handleApply}
+            onApply={() => handleApply(candidatoId)}
             onClose={closeApplyModal}
+            preguntas={preguntas}
+            respuestas={respuestas}
+            setRespuestas={setRespuestas}
+            candidatoId={candidatoId}
           />
         )}
       </AnimatePresence>
