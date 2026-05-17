@@ -1,7 +1,7 @@
 import { pool } from "../db.js";
 import { createHttpError } from "../utils/httpError.js";
 import { logger } from "../utils/logger.js";
-import { analyzeCvWithGemini } from "../utils/cvGemini.js";
+import { callGemini } from "../utils/cvGemini.js";
 
 export async function getPreguntasByVacante(vacanteId) {
   const [rows] = await pool.query(
@@ -95,8 +95,8 @@ Reglas:
 Responde SOLO con el JSON válido, sin explicaciones adicionales.`;
 
   try {
-    const response = await analyzeCvWithGemini(prompt);
-    let jsonStr = response;
+    const rawResponse = await callGemini(prompt);
+    let jsonStr = rawResponse;
 
     // Extraer JSON si viene envuelto en markdown
     const jsonMatch = jsonStr.match(/```(?:json)?\s*([\s\S]*?)```/);

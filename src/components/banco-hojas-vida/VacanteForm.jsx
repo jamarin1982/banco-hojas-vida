@@ -23,10 +23,11 @@ export function VacanteForm({ form, setForm, onSave, onCancel, isLoading, pregun
   const [generatingPreguntas, setGeneratingPreguntas] = useState(false);
   const [preguntasError, setPreguntasError] = useState("");
   const [showPreguntasSection, setShowPreguntasSection] = useState(false);
+  const [localPreguntas, setLocalPreguntas] = useState([]);
 
   // Usar preguntas del prop o estado local
-  const preguntasState = preguntas || [];
-  const setPreguntasState = setPreguntas || setPreguntas;
+  const preguntasState = preguntas !== undefined ? preguntas : localPreguntas;
+  const setPreguntasState = setPreguntas || setLocalPreguntas;
 
   const handleGeneratePerfil = async () => {
     if (!form.descripcion?.trim()) {

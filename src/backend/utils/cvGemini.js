@@ -6,6 +6,44 @@ import { logger } from "./logger.js";
 const GEMINI_MODEL = () => process.env.GEMINI_MODEL || "gemini-2.5-flash";
 
 /**
+ * Llamada genérica a Gemini API para cualquier prompt.
+ * @param {string} prompt - Prompt a enviar a Gemini
+ * @returns {Promise<string>} Respuesta en texto plano
+ */
+export async function callGemini(prompt) {
+  const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+
+  if (!GEMINI_API_KEY) {
+    throw createHttpError(503, "Gemini API no está configurada. Agrega GEMINI_API_KEY en el .env del backend.");
+  }
+
+  const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+  const model = genAI.getGenerativeModel({ model: GEMINI_MODEL() });
+
+  try {
+    logger.info("Llamando a Gemini API", { model: GEMINI_MODEL() });
+    const result = await model.generateContent(prompt);
+    const raw = result.response.text().trim();
+    logger.info("Respuesta recibida de Gemini");
+    return raw;
+  } catch (error) {
+    if (error.status) throw error;
+    logger.error("Error llamando a Gemini API", { message: error.message });
+
+    if (error.message?.includes("429") || error.message?.includes("Too Many Requests")) {
+      throw createHttpError(429, "Cuota de Gemini API excedida. Espera unos minutos e intenta de nuevo.");
+    }
+    if (error.message?.includes("403") || error.message?.includes("Forbidden") || error.message?.includes("leaked")) {
+      throw createHttpError(403, "API key de Gemini inválida o bloqueada. Verifica GEMINI_API_KEY en el .env.");
+    }
+    if (error.message?.includes("404") || error.message?.includes("not found")) {
+      throw createHttpError(404, `Modelo Gemini '${GEMINI_MODEL()}' no disponible. Cambia GEMINI_MODEL en el .env.`);
+    }
+    throw createHttpError(502, `Error de Gemini API: ${error.message}`);
+  }
+}
+
+/**
  * Analiza el texto de un CV usando Gemini API y devuelve datos estructurados.
  * @param {string} text - Texto extraído del PDF
  * @returns {Promise<{nombre,cargo,experiencia,ciudad,certificaciones,resumen}>}
