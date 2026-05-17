@@ -1,20 +1,32 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { X, Sparkles, Loader2, CheckCircle, AlertCircle, Plus } from "lucide-react";
+import { X, Sparkles, Loader2, CheckCircle, AlertCircle, Plus, MessageSquare, Trash2 } from "lucide-react";
 import { generateVacantePerfil } from "@/services/vacantesApi";
+import { apiGenerarPreguntas, apiCreatePregunta, apiUpdatePregunta, apiDeletePregunta, apiGetPreguntas } from "@/services/preguntasApi";
+import { useAuth } from "@/context/AuthContext";
 
-export function VacanteForm({ form, setForm, onSave, onCancel, isLoading }) {
+export function VacanteForm({ form, setForm, onSave, onCancel, isLoading, preguntas, setPreguntas }) {
+  const { token } = useAuth();
   const [generating, setGenerating] = useState(false);
   const [generatedPerfil, setGeneratedPerfil] = useState(null);
   const [editablePerfil, setEditablePerfil] = useState(null);
   const [generateError, setGenerateError] = useState("");
   const [showPreview, setShowPreview] = useState(false);
   const [perfilApplied, setPerfilApplied] = useState(false);
+
+  // Preguntas
+  const [generatingPreguntas, setGeneratingPreguntas] = useState(false);
+  const [preguntasError, setPreguntasError] = useState("");
+  const [showPreguntasSection, setShowPreguntasSection] = useState(false);
+
+  // Usar preguntas del prop o estado local
+  const preguntasState = preguntas || [];
+  const setPreguntasState = setPreguntas || setPreguntas;
 
   const handleGeneratePerfil = async () => {
     if (!form.descripcion?.trim()) {
@@ -99,6 +111,70 @@ export function VacanteForm({ form, setForm, onSave, onCancel, isLoading }) {
     setShowPreview(false);
     setGeneratedPerfil(null);
     setEditablePerfil(null);
+  };
+
+  // Preguntas handlers
+  const handleGeneratePreguntas = async () => {
+    if (!token) {
+      setPreguntasError("Debes estar autenticado para generar preguntas.");
+      return;
+    }
+    if (!form.titulo?.trim() && !form.descripcion?.trim()) {
+      setPreguntasError("Completá al menos el título o descripción para generar preguntas.");
+      return;
+    }
+    setGeneratingPreguntas(true);
+    setPreguntasError("");
+    try {
+      const nuevas = await apiGenerarPreguntas(token, {
+        titulo: form.titulo,
+        cargo: form.cargo,
+        ciudad: form.ciudad,
+        descripcion: form.descripcion,
+        requisitos: form.requisitos?.join(", "),
+        experiencia_minima: form.experiencia_minima,
+      });
+      setPreguntas(nuevas);
+      setShowPreguntasSection(true);
+    } catch (err) {
+      setPreguntasError(err.message);
+    } finally {
+      setGeneratingPreguntas(false);
+    }
+  };
+
+  const handleAddPregunta = (tipo) => {
+    const nueva = {
+      id: `temp-${Date.now()}`,
+      vacante_id: form.id || null,
+      tipo,
+      pregunta: "",
+      orden: preguntasState.filter((p) => p.tipo === tipo).length + 1,
+    };
+    setPreguntasState([...preguntasState, nueva]);
+  };
+
+  const handleUpdatePregunta = (id, field, value) => {
+    setPreguntasState(preguntasState.map((p) => (p.id === id ? { ...p, [field]: value } : p)));
+  };
+
+  const handleDeletePregunta = async (pregunta) => {
+    if (pregunta.id && !pregunta.id.toString().startsWith("temp-") && token) {
+      try {
+        await apiDeletePregunta(token, pregunta.id);
+      } catch (err) {
+        console.error("Error eliminando pregunta:", err);
+      }
+    }
+    setPreguntasState(preguntasState.filter((p) => p.id !== pregunta.id));
+  };
+
+  const getPreguntasByTipo = (tipo) => preguntasState.filter((p) => p.tipo === tipo);
+
+  const tipoConfig = {
+    informativa: { label: "Informativas", color: "blue", icon: "💬", desc: "Para conocer mejor al candidato" },
+    calificatoria: { label: "Calificatorias", color: "amber", icon: "⭐", desc: "Evalúan competencias clave" },
+    excluyente: { label: "Excluyentes", color: "red", icon: "🚫", desc: "Respuesta Sí/No - pueden descartar candidatos" },
   };
 
   const handleFormArrayItem = (field, index, value) => {
@@ -562,13 +638,153 @@ export function VacanteForm({ form, setForm, onSave, onCancel, isLoading }) {
           id="estado"
           value={form.estado || "Activa"}
           onChange={(e) => setForm({ ...form, estado: e.target.value })}
-          className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm hover:border-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
+          className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm hover:border-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2"
         >
           <option value="Activa">Activa</option>
           <option value="En revisión">En revisión</option>
           <option value="Cerrada">Cerrada</option>
         </select>
       </div>
+
+      {/* Sección de Preguntas */}
+      <Card className="p-5 space-y-4 border-teal-200 bg-teal-50/30">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <MessageSquare className="h-5 w-5 text-teal-700" />
+            <h4 className="font-semibold text-teal-900 text-lg">Preguntas para candidatos</h4>
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={handleGeneratePreguntas}
+            disabled={generatingPreguntas}
+            className="gap-2 border-teal-300 text-teal-700 hover:bg-teal-50"
+          >
+            {generatingPreguntas ? (
+              <><Loader2 className="h-4 w-4 animate-spin" />Generando...</>
+            ) : (
+              <><Sparkles className="h-4 w-4" />Generar con IA</>
+            )}
+          </Button>
+        </div>
+        <p className="text-sm text-teal-700">
+          Agregá preguntas que los candidatos deberán responder al aplicar. Generá 2 informativas, 2 calificatorias y 2 excluyentes con IA.
+        </p>
+
+        {preguntasError && (
+          <div className="flex items-center gap-2 text-sm text-red-600 bg-red-50 p-3 rounded-lg">
+            <AlertCircle className="h-4 w-4 flex-shrink-0" />
+            {preguntasError}
+          </div>
+        )}
+
+        {/* Informativas */}
+        <div className="bg-white rounded-lg p-4 border border-blue-100 space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="text-lg">💬</span>
+              <div>
+                <Label className="text-xs font-semibold text-blue-600 uppercase">Informativas</Label>
+                <p className="text-xs text-slate-500">Para conocer mejor al candidato</p>
+              </div>
+            </div>
+            <Button type="button" variant="ghost" size="sm" onClick={() => handleAddPregunta("informativa")} className="h-6 text-xs text-blue-600">
+              <Plus className="h-3 w-3 mr-1" /> Agregar
+            </Button>
+          </div>
+          <div className="space-y-2">
+            {getPreguntasByTipo("informativa").map((p) => (
+              <div key={p.id} className="flex items-center gap-2">
+                <span className="text-blue-500 text-sm flex-shrink-0">•</span>
+                <Input
+                  value={p.pregunta}
+                  onChange={(e) => handleUpdatePregunta(p.id, "pregunta", e.target.value)}
+                  placeholder="Ej: ¿Cuál es tu disponibilidad para iniciar?"
+                  className="text-sm"
+                />
+                <button type="button" onClick={() => handleDeletePregunta(p)} className="text-slate-400 hover:text-red-500 flex-shrink-0">
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </div>
+            ))}
+            {getPreguntasByTipo("informativa").length === 0 && (
+              <p className="text-xs text-slate-400 italic">No hay preguntas informativas</p>
+            )}
+          </div>
+        </div>
+
+        {/* Calificatorias */}
+        <div className="bg-white rounded-lg p-4 border border-amber-100 space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="text-lg">⭐</span>
+              <div>
+                <Label className="text-xs font-semibold text-amber-600 uppercase">Calificatorias</Label>
+                <p className="text-xs text-slate-500">Evalúan competencias clave</p>
+              </div>
+            </div>
+            <Button type="button" variant="ghost" size="sm" onClick={() => handleAddPregunta("calificatoria")} className="h-6 text-xs text-amber-600">
+              <Plus className="h-3 w-3 mr-1" /> Agregar
+            </Button>
+          </div>
+          <div className="space-y-2">
+            {getPreguntasByTipo("calificatoria").map((p) => (
+              <div key={p.id} className="flex items-center gap-2">
+                <span className="text-amber-500 text-sm flex-shrink-0">✓</span>
+                <Input
+                  value={p.pregunta}
+                  onChange={(e) => handleUpdatePregunta(p.id, "pregunta", e.target.value)}
+                  placeholder="Ej: ¿Cuántos años de experiencia tienes con esta tecnología?"
+                  className="text-sm"
+                />
+                <button type="button" onClick={() => handleDeletePregunta(p)} className="text-slate-400 hover:text-red-500 flex-shrink-0">
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </div>
+            ))}
+            {getPreguntasByTipo("calificatoria").length === 0 && (
+              <p className="text-xs text-slate-400 italic">No hay preguntas calificatorias</p>
+            )}
+          </div>
+        </div>
+
+        {/* Excluyentes */}
+        <div className="bg-white rounded-lg p-4 border border-red-100 space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="text-lg">🚫</span>
+              <div>
+                <Label className="text-xs font-semibold text-red-600 uppercase">Excluyentes</Label>
+                <p className="text-xs text-slate-500">Respuesta Sí/No - pueden descartar candidatos</p>
+              </div>
+            </div>
+            <Button type="button" variant="ghost" size="sm" onClick={() => handleAddPregunta("excluyente")} className="h-6 text-xs text-red-600">
+              <Plus className="h-3 w-3 mr-1" /> Agregar
+            </Button>
+          </div>
+          <div className="space-y-2">
+            {getPreguntasByTipo("excluyente").map((p) => (
+              <div key={p.id} className="flex items-center gap-2">
+                <span className="text-red-500 text-sm flex-shrink-0">!</span>
+                <Input
+                  value={p.pregunta}
+                  onChange={(e) => handleUpdatePregunta(p.id, "pregunta", e.target.value)}
+                  placeholder="Ej: ¿Tienes disponibilidad para viajar?"
+                  className="text-sm"
+                />
+                <Badge variant="outline" className="text-xs text-red-600 border-red-200 flex-shrink-0">Sí / No</Badge>
+                <button type="button" onClick={() => handleDeletePregunta(p)} className="text-slate-400 hover:text-red-500 flex-shrink-0">
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </div>
+            ))}
+            {getPreguntasByTipo("excluyente").length === 0 && (
+              <p className="text-xs text-slate-400 italic">No hay preguntas excluyentes</p>
+            )}
+          </div>
+        </div>
+      </Card>
 
       <div className="flex justify-end gap-3">
         <Button

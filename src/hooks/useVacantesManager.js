@@ -7,6 +7,8 @@ import {
   deleteVacante,
   fetchTopCandidatesForVacante,
 } from "@/services/vacantesApi";
+import { apiCreatePregunta, apiUpdatePregunta, apiDeletePregunta, apiGetPreguntas } from "@/services/preguntasApi";
+import { useAuth } from "@/context/AuthContext";
 
 const EMPTY_VACANTE_FORM = {
   titulo: "",
@@ -24,12 +26,14 @@ const EMPTY_VACANTE_FORM = {
 };
 
 export function useVacantesManager() {
+  const { token } = useAuth();
   const [vacantes, setVacantes] = useState([]);
   const [selectedVacante, setSelectedVacante] = useState(null);
   const [topCandidates, setTopCandidates] = useState([]);
   const [form, setForm] = useState(EMPTY_VACANTE_FORM);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [preguntas, setPreguntas] = useState([]);
 
   // Cargar vacantes
   useEffect(() => {
@@ -66,7 +70,7 @@ export function useVacantesManager() {
     }
   };
 
-  const handleAddVacante = async () => {
+  const handleAddVacante = async (preguntasData = []) => {
     if (!form.titulo || !form.cargo || !form.ciudad) {
       setError("Por favor completa los campos obligatorios");
       return;
@@ -74,14 +78,32 @@ export function useVacantesManager() {
 
     try {
       setLoading(true);
+      let vacanteId;
       if (selectedVacante) {
         await updateVacante(selectedVacante.id, form);
+        vacanteId = selectedVacante.id;
       } else {
-        await createVacante(form);
+        const nueva = await createVacante(form);
+        vacanteId = nueva.id || nueva.insertId;
       }
+
+      // Guardar preguntas
+      if (token && preguntasData.length > 0) {
+        for (const p of preguntasData) {
+          if (p.id && !p.id.toString().startsWith("temp-")) {
+            // Pregunta existente - actualizar
+            await apiUpdatePregunta(token, p.id, { tipo: p.tipo, pregunta: p.pregunta, orden: p.orden });
+          } else {
+            // Pregunta nueva - crear
+            await apiCreatePregunta(token, vacanteId, { tipo: p.tipo, pregunta: p.pregunta, orden: p.orden });
+          }
+        }
+      }
+
       await loadVacantes();
       setForm(EMPTY_VACANTE_FORM);
       setSelectedVacante(null);
+      setPreguntas([]);
       setError(null);
     } catch (err) {
       setError(err.message);
@@ -109,11 +131,22 @@ export function useVacantesManager() {
   const handleSelectVacante = async (vacante) => {
     setSelectedVacante(vacante);
     setForm(vacante);
+    // Cargar preguntas de la vacante seleccionada
+    if (token) {
+      try {
+        const data = await apiGetPreguntas(vacante.id);
+        setPreguntas(data);
+      } catch (err) {
+        console.error("Error cargando preguntas:", err);
+        setPreguntas([]);
+      }
+    }
   };
 
   const handleNewVacante = () => {
     setSelectedVacante(null);
     setForm(EMPTY_VACANTE_FORM);
+    setPreguntas([]);
   };
 
   return {
@@ -130,5 +163,7 @@ export function useVacantesManager() {
     handleNewVacante,
     loadVacantes,
     loadTopCandidates,
+    preguntas,
+    setPreguntas,
   };
 }

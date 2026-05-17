@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import authRoutes from "./routes/auth.js";
 import candidatosRoutes from "./routes/candidatos.js";
 import vacantesRoutes from "./routes/vacantes.js";
+import preguntasRoutes from "./routes/preguntas.js";
 import { assertDatabaseConnection } from "./db.js";
 import { requestContext } from "./middlewares/requestContext.js";
 import { logger } from "./utils/logger.js";
@@ -74,6 +75,7 @@ app.get("/internal/metrics", (req, res) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/candidatos", candidatosRoutes);
 app.use("/api/vacantes", vacantesRoutes);
+app.use("/api/preguntas", preguntasRoutes);
 
 app.use((err, req, res, NEXT) => {
   void NEXT;
