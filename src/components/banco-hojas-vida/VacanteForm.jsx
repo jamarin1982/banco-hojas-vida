@@ -18,12 +18,39 @@ export function VacanteForm({ form, setForm, onSave, onCancel, isLoading, pregun
   const [generateError, setGenerateError] = useState("");
   const [showPreview, setShowPreview] = useState(false);
   const [perfilApplied, setPerfilApplied] = useState(false);
+  const [waitTimePerfil, setWaitTimePerfil] = useState(0);
 
   // Preguntas
   const [generatingPreguntas, setGeneratingPreguntas] = useState(false);
   const [preguntasError, setPreguntasError] = useState("");
   const [showPreguntasSection, setShowPreguntasSection] = useState(false);
   const [localPreguntas, setLocalPreguntas] = useState([]);
+  const [waitTimePreguntas, setWaitTimePreguntas] = useState(0);
+
+  // Cooldown timers
+  useEffect(() => {
+    let interval = null;
+    if (waitTimePreguntas > 0) {
+      interval = setInterval(() => {
+        setWaitTimePreguntas((prev) => prev - 1);
+      }, 1000);
+    } else if (waitTimePreguntas === 0 && interval) {
+      clearInterval(interval);
+    }
+    return () => clearInterval(interval);
+  }, [waitTimePreguntas]);
+
+  useEffect(() => {
+    let interval = null;
+    if (waitTimePerfil > 0) {
+      interval = setInterval(() => {
+        setWaitTimePerfil((prev) => prev - 1);
+      }, 1000);
+    } else if (waitTimePerfil === 0 && interval) {
+      clearInterval(interval);
+    }
+    return () => clearInterval(interval);
+  }, [waitTimePerfil]);
 
   // Usar preguntas del prop o estado local
   const preguntasState = preguntas !== undefined ? preguntas : localPreguntas;
@@ -49,6 +76,10 @@ export function VacanteForm({ form, setForm, onSave, onCancel, isLoading, pregun
       setShowPreview(true);
     } catch (err) {
       setGenerateError(err.message);
+      // Si es error de cuota o rate limit, activar cooldown de 60s
+      if (err.message.includes("429") || err.message.includes("quota") || err.message.includes("Too Many Requests")) {
+        setWaitTimePerfil(60);
+      }
     } finally {
       setGenerating(false);
     }
@@ -139,6 +170,10 @@ export function VacanteForm({ form, setForm, onSave, onCancel, isLoading, pregun
       setShowPreguntasSection(true);
     } catch (err) {
       setPreguntasError(err.message);
+      // Si es error de cuota o rate limit, activar cooldown de 60s
+      if (err.message.includes("429") || err.message.includes("quota") || err.message.includes("Too Many Requests")) {
+        setWaitTimePreguntas(60);
+      }
     } finally {
       setGeneratingPreguntas(false);
     }
@@ -257,10 +292,12 @@ export function VacanteForm({ form, setForm, onSave, onCancel, isLoading, pregun
           type="button"
           variant="outline"
           onClick={handleGeneratePerfil}
-          disabled={generating || !form.descripcion?.trim() || perfilApplied}
+          disabled={generating || !form.descripcion?.trim() || perfilApplied || waitTimePerfil > 0}
           className="gap-2 border-blue-300 text-blue-700 hover:bg-blue-50"
         >
-          {generating ? (
+          {waitTimePerfil > 0 ? (
+            <><Loader2 className="h-4 w-4 animate-spin" />Espera {waitTimePerfil}s...</>
+          ) : generating ? (
             <><Loader2 className="h-4 w-4 animate-spin" />Generando perfil...</>
           ) : perfilApplied ? (
             <><CheckCircle className="h-4 w-4 text-green-600" />Perfil aplicado</>
@@ -659,10 +696,12 @@ export function VacanteForm({ form, setForm, onSave, onCancel, isLoading, pregun
             variant="outline"
             size="sm"
             onClick={handleGeneratePreguntas}
-            disabled={generatingPreguntas}
+            disabled={generatingPreguntas || waitTimePreguntas > 0}
             className="gap-2 border-teal-300 text-teal-700 hover:bg-teal-50"
           >
-            {generatingPreguntas ? (
+            {waitTimePreguntas > 0 ? (
+              <><Loader2 className="h-4 w-4 animate-spin" />Espera {waitTimePreguntas}s...</>
+            ) : generatingPreguntas ? (
               <><Loader2 className="h-4 w-4 animate-spin" />Generando...</>
             ) : (
               <><Sparkles className="h-4 w-4" />Generar con IA</>
