@@ -8,9 +8,12 @@ import {
   updateCandidate,
   uploadCandidateCv,
 } from "@/services/candidatosApi";
+import { apiGetDashboardStats } from "@/services/dashboardApi";
+import { useAuth } from "@/context/AuthContext";
 import { EMPTY_CANDIDATE_FORM, scoreCandidate } from "@/features/candidatos/model";
 
 export function useCandidatesDashboard() {
+  const { token } = useAuth();
   const [candidates, setCandidates] = useState([]);
   const [editingCandidate, setEditingCandidate] = useState(null);
   const [activeTab, setActiveTab] = useState("talento");
@@ -21,12 +24,21 @@ export function useCandidatesDashboard() {
   const [loadingIA, setLoadingIA] = useState(false);
   const [analyzeError, setAnalyzeError] = useState(null);
   const [analyzeProgress, setAnalyzeProgress] = useState("");
+  const [dashboardStats, setDashboardStats] = useState(null);
 
   useEffect(() => {
     fetchCandidates()
       .then((data) => setCandidates(data))
       .catch((err) => console.error("Error cargando candidatos:", err));
   }, []);
+
+  useEffect(() => {
+    if (token) {
+      apiGetDashboardStats(token)
+        .then((stats) => setDashboardStats(stats))
+        .catch((err) => console.error("Error cargando stats dashboard:", err));
+    }
+  }, [token]);
 
   useEffect(() => {
     setForm(editingCandidate ? mapCandidateToForm(editingCandidate) : EMPTY_CANDIDATE_FORM);
@@ -53,12 +65,24 @@ export function useCandidatesDashboard() {
   }, [enriched, query, filterCity, filterCargo]);
 
   const metrics = useMemo(() => {
+    if (dashboardStats) {
+      return {
+        total: dashboardStats.totalCandidatos,
+        inmediatos: dashboardStats.inmediatos,
+        aprobados: dashboardStats.aprobados,
+        promedio: dashboardStats.scorePromedio,
+        vacantesActivas: dashboardStats.vacantesActivas,
+        vacantesSinPostulantes: dashboardStats.vacantesSinPostulantes,
+        aplicacionesRecientes: dashboardStats.aplicacionesRecientes,
+      };
+    }
+    // Fallback local mientras carga
     const total = candidates.length;
     const inmediatos = candidates.filter((candidate) => candidate.disponibilidad === "Inmediata").length;
     const aprobados = candidates.filter((candidate) => ["Aprobado", "Contratado"].includes(candidate.estado)).length;
     const promedio = total ? Math.round(enriched.reduce((acc, candidate) => acc + candidate.score, 0) / total) : 0;
-    return { total, inmediatos, aprobados, promedio };
-  }, [candidates, enriched]);
+    return { total, inmediatos, aprobados, promedio, vacantesActivas: 0, vacantesSinPostulantes: 0, aplicacionesRecientes: 0 };
+  }, [candidates, enriched, dashboardStats]);
 
   const handleAdd = async () => {
     if (!form.nombre || !form.ciudad || !form.cargo) return;
@@ -179,6 +203,7 @@ export function useCandidatesDashboard() {
     enriched,
     filtered,
     metrics,
+    dashboardStats,
     handleAdd,
     handleDelete,
     moveStatus,
