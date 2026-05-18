@@ -111,6 +111,18 @@ export async function getDashboardStats() {
        LIMIT 5`
     );
 
+    // 17. Mejor match por candidato (contra vacantes activas)
+    const [mejorMatchPorCandidato] = await pool.query(
+      `SELECT vcs.candidato_id, 
+        MAX(vcs.score_total) as mejor_match,
+        v.id as vacante_id,
+        v.titulo as vacante_titulo
+       FROM vacante_candidato_score vcs
+       JOIN vacantes v ON v.id = vcs.vacante_id
+       WHERE v.estado = 'Activa'
+       GROUP BY vcs.candidato_id`
+    );
+
     return {
       // KPIs principales
       totalCandidatos: candTotal.total || 0,
@@ -149,9 +161,35 @@ export async function getDashboardStats() {
 
       // Top vacantes
       topVacantes,
+
+      // Mejor match por candidato
+      mejorMatchPorCandidato: Object.fromEntries(
+        mejorMatchPorCandidato.map(r => [r.candidato_id, { score: Math.round(r.mejor_match), vacante: r.vacante_titulo }])
+      ),
     };
   } catch (error) {
     logger.error("Error obteniendo stats del dashboard:", error);
+    throw error;
+  }
+}
+
+export async function getCandidateMatches() {
+  try {
+    const [matches] = await pool.query(
+      `SELECT vcs.candidato_id, 
+        MAX(vcs.score_total) as mejor_match,
+        v.id as vacante_id,
+        v.titulo as vacante_titulo
+       FROM vacante_candidato_score vcs
+       JOIN vacantes v ON v.id = vcs.vacante_id
+       WHERE v.estado = 'Activa'
+       GROUP BY vcs.candidato_id`
+    );
+    return Object.fromEntries(
+      matches.map(r => [r.candidato_id, { score: Math.round(r.mejor_match), vacanteId: r.vacante_id, vacante: r.vacante_titulo }])
+    );
+  } catch (error) {
+    logger.error("Error obteniendo matches de candidatos:", error);
     throw error;
   }
 }

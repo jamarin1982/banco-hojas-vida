@@ -55,16 +55,25 @@ export function CandidateCard({
               </div>
             </div>
 
-            {/* Score de ajuste (lado derecho) */}
+            {/* Score de match real (lado derecho) */}
             <div className="w-40 space-y-3 rounded-xl bg-slate-50 p-4">
               <div className="text-center">
                 <div className="flex items-center justify-center gap-1 mb-2">
                   <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
-                  <span className="text-sm font-semibold text-slate-600">Score</span>
+                  <span className="text-sm font-semibold text-slate-600">
+                    {candidate.score > 0 ? "Mejor Match" : "Sin match"}
+                  </span>
                 </div>
-                <p className="text-3xl font-bold text-slate-900">{candidate.score}%</p>
+                <p className={`text-3xl font-bold ${candidate.score >= 75 ? "text-green-600" : candidate.score >= 50 ? "text-amber-600" : "text-slate-400"}`}>
+                  {candidate.score > 0 ? `${candidate.score}%` : "N/A"}
+                </p>
               </div>
-              <Progress value={candidate.score} className="h-2" />
+              {candidate.score > 0 && <Progress value={candidate.score} className="h-2" />}
+              {candidate.mejorMatchVacante && (
+                <p className="text-xs text-slate-500 text-center truncate" title={candidate.mejorMatchVacante}>
+                  {candidate.mejorMatchVacante}
+                </p>
+              )}
             </div>
           </div>
 

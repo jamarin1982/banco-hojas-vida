@@ -8,9 +8,9 @@ import {
   updateCandidate,
   uploadCandidateCv,
 } from "@/services/candidatosApi";
-import { apiGetDashboardStats } from "@/services/dashboardApi";
+import { apiGetDashboardStats, apiGetCandidateMatches } from "@/services/dashboardApi";
 import { useAuth } from "@/context/AuthContext";
-import { EMPTY_CANDIDATE_FORM, scoreCandidate } from "@/features/candidatos/model";
+import { EMPTY_CANDIDATE_FORM } from "@/features/candidatos/model";
 
 export function useCandidatesDashboard() {
   const { token } = useAuth();
@@ -25,6 +25,7 @@ export function useCandidatesDashboard() {
   const [analyzeError, setAnalyzeError] = useState(null);
   const [analyzeProgress, setAnalyzeProgress] = useState("");
   const [dashboardStats, setDashboardStats] = useState(null);
+  const [candidateMatches, setCandidateMatches] = useState({});
 
   useEffect(() => {
     fetchCandidates()
@@ -37,6 +38,9 @@ export function useCandidatesDashboard() {
       apiGetDashboardStats(token)
         .then((stats) => setDashboardStats(stats))
         .catch((err) => console.error("Error cargando stats dashboard:", err));
+      apiGetCandidateMatches(token)
+        .then((matches) => setCandidateMatches(matches))
+        .catch((err) => console.error("Error cargando matches:", err));
     }
   }, [token]);
 
@@ -45,8 +49,16 @@ export function useCandidatesDashboard() {
   }, [editingCandidate]);
 
   const enriched = useMemo(() => {
-    return candidates.map((candidate) => ({ ...candidate, score: scoreCandidate(candidate) }));
-  }, [candidates]);
+    return candidates.map((candidate) => {
+      const match = candidateMatches[candidate.id];
+      return {
+        ...candidate,
+        score: match?.score || 0,
+        mejorMatchVacante: match?.vacante || null,
+        mejorMatchVacanteId: match?.vacanteId || null,
+      };
+    });
+  }, [candidates, candidateMatches]);
 
   const filtered = useMemo(() => {
     return enriched

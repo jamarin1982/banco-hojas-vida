@@ -7,3 +7,11 @@ export async function apiGetDashboardStats(token) {
   if (!res.ok) throw new Error("Error cargando estadísticas");
   return res.json();
 }
+
+export async function apiGetCandidateMatches(token) {
+  const res = await fetch(`${API_URL}/api/dashboard/candidate-matches`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error("Error cargando matches de candidatos");
+  return res.json();
+}
