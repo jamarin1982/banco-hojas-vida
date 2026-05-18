@@ -18,6 +18,8 @@ import {
   apiGetMiPerfil, apiUpdateMiPerfil, apiGetMisAplicaciones,
   apiSubirCvPerfil, apiAnalizarCvPerfil, apiAnalizarCvPerfilGemini, getCvPerfilUrl,
 } from "@/services/authApi";
+import { apiGetCandidatoStats } from "@/services/dashboardApi";
+import { CandidatoMetrics } from "@/components/candidato/CandidatoMetrics";
 
 // --- Sidebar candidato --------------------------------------------------------
 
@@ -730,6 +732,7 @@ function TabPerfil({ token }) {
 
 const ESTADO_COLORS = {
   "Aplico": "bg-slate-100 text-slate-700",
+  "Aplicó": "bg-slate-100 text-slate-700",
   "Preseleccionado": "bg-blue-100 text-blue-700",
   "Entrevista": "bg-amber-100 text-amber-700",
   "Aprobado": "bg-green-100 text-green-700",
@@ -819,6 +822,15 @@ export default function CandidatoDashboard() {
   const { user, token, logout } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("vacantes");
+  const [candidatoStats, setCandidatoStats] = useState(null);
+
+  useEffect(() => {
+    if (token) {
+      apiGetCandidatoStats(token)
+        .then(setCandidatoStats)
+        .catch(() => {});
+    }
+  }, [token]);
 
   const handleLogout = () => {
     logout();
@@ -831,6 +843,7 @@ export default function CandidatoDashboard() {
       <CandidatoMobileNav activeTab={activeTab} onTabChange={setActiveTab} />
 
       <main className="space-y-6 px-4 py-8 pb-24 sm:pb-8">
+        <CandidatoMetrics stats={candidatoStats} />
         {activeTab === "vacantes" && <TabVacantes />}
         {activeTab === "perfil" && <TabPerfil token={token} />}
         {activeTab === "mis-aplicaciones" && <TabMisAplicaciones token={token} />}

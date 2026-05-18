@@ -15,3 +15,11 @@ export async function apiGetCandidateMatches(token) {
   if (!res.ok) throw new Error("Error cargando matches de candidatos");
   return res.json();
 }
+
+export async function apiGetCandidatoStats(token) {
+  const res = await fetch(`${API_URL}/api/dashboard/candidato-stats`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error("Error cargando estadísticas del candidato");
+  return res.json();
+}
