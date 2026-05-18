@@ -52,6 +52,16 @@ export function VacanteForm({ form, setForm, onSave, onCancel, isLoading, pregun
     return () => clearInterval(interval);
   }, [waitTimePerfil]);
 
+  // Detectar si la vacante cargada ya tiene perfil de IA para bloquear regeneración
+  useEffect(() => {
+    if (form.id) {
+      const hasAiData = form.resumen || (form.responsabilidades && form.responsabilidades.length > 0);
+      setPerfilApplied(!!hasAiData);
+    } else {
+      setPerfilApplied(false);
+    }
+  }, [form.id, form.resumen, form.responsabilidades]);
+
   // Usar preguntas del prop o estado local
   const preguntasState = preguntas !== undefined ? preguntas : localPreguntas;
   const setPreguntasState = setPreguntas || setLocalPreguntas;
