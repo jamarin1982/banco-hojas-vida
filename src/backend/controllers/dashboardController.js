@@ -1,4 +1,4 @@
-import { getDashboardStats, getCandidateMatches, getCandidatoStats } from "../services/dashboardService.js";
+import { getDashboardStats, getCandidateMatches } from "../services/dashboardService.js";
 import { getCandidatoStats as getCandidatoStatsSvc } from "../services/candidatoStatsService.js";
 
 export async function getStatsHandler(req, res, next) {
