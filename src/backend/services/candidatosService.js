@@ -4,7 +4,13 @@ import { createHttpError } from "../utils/httpError.js";
 import { readCvPdf } from "../utils/readCvPdf.js";
 
 export async function getAllCandidates() {
-  const [rows] = await pool.query("SELECT * FROM candidatos ORDER BY id DESC");
+  const [rows] = await pool.query(`
+    SELECT c.*, 
+      CASE WHEN u.id IS NOT NULL THEN 1 ELSE 0 END as tiene_usuario
+    FROM candidatos c
+    LEFT JOIN usuarios u ON u.candidato_id = c.id
+    ORDER BY c.id DESC
+  `);
   return rows;
 }
 

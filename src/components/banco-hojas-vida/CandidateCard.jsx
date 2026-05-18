@@ -127,7 +127,7 @@ export function CandidateCard({
                 </a>
               )}
 
-              {candidate.cv_path && (
+              {candidate.cv_path && !candidate.tiene_usuario && (
                 <Button 
                   disabled={loadingIA} 
                   onClick={() => onAnalyzeCv(candidate)}
@@ -136,6 +136,11 @@ export function CandidateCard({
                   <Zap className="h-4 w-4" />
                   {loadingIA ? "Analizando..." : "Analizar con IA"}
                 </Button>
+              )}
+              {candidate.cv_path && candidate.tiene_usuario && (
+                <div className="w-full p-3 rounded-xl bg-slate-100 text-center text-xs text-slate-500">
+                  Perfil registrado por el candidato
+                </div>
               )}
             </div>
 

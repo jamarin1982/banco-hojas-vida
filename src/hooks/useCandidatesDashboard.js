@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import {
-  analyzeCandidateCv,
+  analyzeCandidateCvGemini,
   createCandidate,
   deleteCandidate,
   fetchCandidates,
@@ -152,7 +152,7 @@ export function useCandidatesDashboard() {
     setAnalyzeProgress("Analizando datos...");
 
     try {
-      const data = await analyzeCandidateCv(candidate.id);
+      const data = await analyzeCandidateCvGemini(candidate.id);
 
       console.log("🔍 Datos recibidos del servidor:", data);
 
