@@ -6,7 +6,7 @@ export function MetricsCards({ metrics }) {
   const items = [
     { 
       label: "Candidatos", 
-      value: metrics.total, 
+      value: metrics.totalCandidatos, 
       icon: Users,
       color: "from-teal-500 to-teal-600",
       bgColor: "bg-teal-50",
@@ -30,7 +30,7 @@ export function MetricsCards({ metrics }) {
     },
     { 
       label: "Score promedio", 
-      value: `${metrics.promedio}%`, 
+      value: `${metrics.scorePromedio}%`, 
       icon: BarChart3,
       color: "from-blue-500 to-blue-600",
       bgColor: "bg-blue-50",

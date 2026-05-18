@@ -45,7 +45,7 @@ export function DashboardHeader({ metrics, onNewCandidate, onNewVacante }) {
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <div className="rounded-lg bg-teal-50 p-4 border border-teal-100">
           <p className="text-xs font-semibold text-teal-700 uppercase">Total</p>
-          <p className="mt-2 text-2xl font-bold text-teal-900">{metrics.total}</p>
+          <p className="mt-2 text-2xl font-bold text-teal-900">{metrics.totalCandidatos}</p>
           <p className="mt-1 text-xs text-teal-700">candidatos</p>
         </div>
         <div className="rounded-lg bg-emerald-50 p-4 border border-emerald-100">
@@ -60,7 +60,7 @@ export function DashboardHeader({ metrics, onNewCandidate, onNewVacante }) {
         </div>
         <div className="rounded-lg bg-amber-50 p-4 border border-amber-100">
           <p className="text-xs font-semibold text-amber-600 uppercase">Score Promedio</p>
-          <p className="mt-2 text-2xl font-bold text-amber-900">{metrics.promedio}%</p>
+          <p className="mt-2 text-2xl font-bold text-amber-900">{metrics.scorePromedio}%</p>
           <p className="mt-1 text-xs text-amber-700">calidad</p>
         </div>
       </div>

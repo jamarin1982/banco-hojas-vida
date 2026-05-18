@@ -77,36 +77,29 @@ export function useCandidatesDashboard() {
   }, [enriched, query, filterCity, filterCargo]);
 
   const metrics = useMemo(() => {
-    if (dashboardStats) {
-      return {
-        total: dashboardStats.totalCandidatos,
-        inmediatos: dashboardStats.inmediatos,
-        aprobados: dashboardStats.aprobados,
-        promedio: dashboardStats.scorePromedio,
-        vacantesActivas: dashboardStats.vacantesActivas,
-        vacantesSinPostulantes: dashboardStats.vacantesSinPostulantes,
-        aplicacionesRecientes: dashboardStats.aplicacionesRecientes,
-        matchAlto: dashboardStats.matchAlto,
-        embudoAplicaciones: dashboardStats.embudoAplicaciones,
-        vacantesPorEstado: dashboardStats.vacantesPorEstado,
-        scorePorVacante: dashboardStats.scorePorVacante,
-        desgloseScores: dashboardStats.desgloseScores,
-        topCiudades: dashboardStats.topCiudades,
-        vacConPreguntas: dashboardStats.vacConPreguntas,
-        candConCv: dashboardStats.candConCv,
-        topVacantes: dashboardStats.topVacantes,
-      };
-    }
-    const total = candidates.length;
-    const inmediatos = candidates.filter((candidate) => candidate.disponibilidad === "Inmediata").length;
-    const aprobados = candidates.filter((candidate) => ["Aprobado", "Contratado"].includes(candidate.estado)).length;
-    const promedio = total ? Math.round(enriched.reduce((acc, candidate) => acc + candidate.score, 0) / total) : 0;
+    const ds = dashboardStats;
+    const total = ds ? ds.totalCandidatos : candidates.length;
+    const inmediatos = ds ? ds.inmediatos : candidates.filter((c) => c.disponibilidad === "Inmediata").length;
+    const aprobados = ds ? ds.aprobados : candidates.filter((c) => ["Aprobado", "Contratado"].includes(c.estado)).length;
+    const scorePromedio = ds ? ds.scorePromedio : (total ? Math.round(enriched.reduce((acc, c) => acc + c.score, 0) / total) : 0);
+
     return {
-      total, inmediatos, aprobados, promedio,
-      vacantesActivas: 0, vacantesSinPostulantes: 0, aplicacionesRecientes: 0,
-      matchAlto: 0, embudoAplicaciones: {}, vacantesPorEstado: {},
-      scorePorVacante: [], desgloseScores: {}, topCiudades: [],
-      vacConPreguntas: 0, candConCv: 0, topVacantes: [],
+      totalCandidatos: total,
+      inmediatos,
+      aprobados,
+      scorePromedio,
+      vacantesActivas: ds?.vacantesActivas || 0,
+      vacantesSinPostulantes: ds?.vacantesSinPostulantes || 0,
+      aplicacionesRecientes: ds?.aplicacionesRecientes || 0,
+      matchAlto: ds?.matchAlto || 0,
+      embudoAplicaciones: ds?.embudoAplicaciones || {},
+      vacantesPorEstado: ds?.vacantesPorEstado || {},
+      scorePorVacante: ds?.scorePorVacante || [],
+      desgloseScores: ds?.desgloseScores || {},
+      topCiudades: ds?.topCiudades || [],
+      vacConPreguntas: ds?.vacConPreguntas || 0,
+      candConCv: ds?.candConCv || 0,
+      topVacantes: ds?.topVacantes || [],
     };
   }, [candidates, enriched, dashboardStats]);
 
