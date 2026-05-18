@@ -74,14 +74,28 @@ export function useCandidatesDashboard() {
         vacantesActivas: dashboardStats.vacantesActivas,
         vacantesSinPostulantes: dashboardStats.vacantesSinPostulantes,
         aplicacionesRecientes: dashboardStats.aplicacionesRecientes,
+        matchAlto: dashboardStats.matchAlto,
+        embudoAplicaciones: dashboardStats.embudoAplicaciones,
+        vacantesPorEstado: dashboardStats.vacantesPorEstado,
+        scorePorVacante: dashboardStats.scorePorVacante,
+        desgloseScores: dashboardStats.desgloseScores,
+        topCiudades: dashboardStats.topCiudades,
+        vacConPreguntas: dashboardStats.vacConPreguntas,
+        candConCv: dashboardStats.candConCv,
+        topVacantes: dashboardStats.topVacantes,
       };
     }
-    // Fallback local mientras carga
     const total = candidates.length;
     const inmediatos = candidates.filter((candidate) => candidate.disponibilidad === "Inmediata").length;
     const aprobados = candidates.filter((candidate) => ["Aprobado", "Contratado"].includes(candidate.estado)).length;
     const promedio = total ? Math.round(enriched.reduce((acc, candidate) => acc + candidate.score, 0) / total) : 0;
-    return { total, inmediatos, aprobados, promedio, vacantesActivas: 0, vacantesSinPostulantes: 0, aplicacionesRecientes: 0 };
+    return {
+      total, inmediatos, aprobados, promedio,
+      vacantesActivas: 0, vacantesSinPostulantes: 0, aplicacionesRecientes: 0,
+      matchAlto: 0, embudoAplicaciones: {}, vacantesPorEstado: {},
+      scorePorVacante: [], desgloseScores: {}, topCiudades: [],
+      vacConPreguntas: 0, candConCv: 0, topVacantes: [],
+    };
   }, [candidates, enriched, dashboardStats]);
 
   const handleAdd = async () => {

@@ -2,7 +2,7 @@ import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { getCvUrl } from "@/services/candidatosApi";
 import { statusColor } from "@/features/candidatos/model";
 import { CandidateForm } from "@/components/banco-hojas-vida/CandidateForm";
-import { MetricsCards } from "@/components/banco-hojas-vida/MetricsCards";
+import { DashboardMetrics } from "@/components/banco-hojas-vida/DashboardMetrics";
 import { VacanteMatchingPanel } from "@/components/banco-hojas-vida/VacanteMatchingPanel";
 import { VacanteForm } from "@/components/banco-hojas-vida/VacanteForm";
 import { VacantesList } from "@/components/banco-hojas-vida/VacantesList";
@@ -167,59 +167,24 @@ export default function BancoHojasVidaMVP() {
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           {/* Tab: Dashboard Overview */}
           <TabsContent value="dashboard" className="space-y-6">
-            <div className="grid gap-6 lg:grid-cols-2">
-              {/* Stats Summary */}
-              <div className="space-y-4 rounded-2xl bg-white p-6 border border-teal-200">
-                <h3 className="text-lg font-bold text-teal-900">Resumen</h3>
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between p-3 rounded-lg bg-teal-50">
-                    <span className="text-sm text-teal-700">Total Candidatos</span>
-                    <span className="text-2xl font-bold text-teal-900">{metrics.total}</span>
-                  </div>
-                  <div className="flex items-center justify-between p-3 rounded-lg bg-emerald-50">
-                    <span className="text-sm text-emerald-700">Disponibles Inmediatamente</span>
-                    <span className="text-2xl font-bold text-emerald-600">{metrics.inmediatos}</span>
-                  </div>
-                  <div className="flex items-center justify-between p-3 rounded-lg bg-sky-50">
-                    <span className="text-sm text-sky-700">Aprobados</span>
-                    <span className="text-2xl font-bold text-sky-600">{metrics.aprobados}</span>
-                  </div>
-                  <div className="flex items-center justify-between p-3 rounded-lg bg-amber-50">
-                    <span className="text-sm text-amber-700">Score Promedio</span>
-                    <span className="text-2xl font-bold text-amber-600">{metrics.promedio}%</span>
-                  </div>
-                </div>
-              </div>
+            <DashboardMetrics metrics={metrics} />
 
-              {/* Quick Actions */}
-              <div className="space-y-4 rounded-2xl bg-white p-6 border border-teal-200">
-                <h3 className="text-lg font-bold text-teal-900">Acciones Rápidas</h3>
-                <div className="space-y-2 text-sm">
-                  <button
-                    onClick={() => setActiveTab("registro")}
-                    className="w-full p-3 rounded-lg bg-teal-50 hover:bg-teal-100 text-teal-700 font-medium transition-colors text-left"
-                  >
-                    Registrar nuevo candidato
-                  </button>
-                  <button
-                    onClick={() => setActiveTab("vacantes")}
-                    className="w-full p-3 rounded-lg bg-sky-50 hover:bg-sky-100 text-sky-700 font-medium transition-colors text-left"
-                  >
-                    Crear nueva vacante
-                  </button>
-                  <button
-                    onClick={() => setActiveTab("matching")}
-                    className="w-full p-3 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-medium transition-colors text-left"
-                  >
-                    Ver matching de vacantes
-                  </button>
-                  <button
-                    onClick={() => setActiveTab("talento")}
-                    className="w-full p-3 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-700 font-medium transition-colors text-left"
-                  >
-                    Explorar base de talento
-                  </button>
-                </div>
+            {/* Quick Actions */}
+            <div className="rounded-2xl bg-white p-6 border border-teal-200">
+              <h3 className="text-lg font-bold text-teal-900 mb-4">Acciones Rápidas</h3>
+              <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+                <button onClick={() => setActiveTab("registro")} className="p-3 rounded-lg bg-teal-50 hover:bg-teal-100 text-teal-700 font-medium transition-colors text-left">
+                  Registrar nuevo candidato
+                </button>
+                <button onClick={() => setActiveTab("vacantes")} className="p-3 rounded-lg bg-sky-50 hover:bg-sky-100 text-sky-700 font-medium transition-colors text-left">
+                  Crear nueva vacante
+                </button>
+                <button onClick={() => setActiveTab("matching")} className="p-3 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-medium transition-colors text-left">
+                  Ver matching de vacantes
+                </button>
+                <button onClick={() => setActiveTab("talento")} className="p-3 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-700 font-medium transition-colors text-left">
+                  Explorar base de talento
+                </button>
               </div>
             </div>
           </TabsContent>
