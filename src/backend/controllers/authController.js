@@ -10,6 +10,7 @@ import {
   subirCvCandidato,
   analizarCvCandidato,
 } from "../services/authService.js";
+import { calculateMatchingForCandidate } from "../services/vacantesService.js";
 import { readCvPdf } from "../utils/readCvPdf.js";
 import { analyzeCv } from "../utils/cvAnalyzer.js";
 import { analyzeCvWithGemini } from "../utils/cvGemini.js";
@@ -133,6 +134,9 @@ export async function miPerfilCandidatoHandler(req, res, next) {
 export async function updateMiPerfilCandidatoHandler(req, res, next) {
   try {
     const perfil = await updateMiPerfilCandidato(req.user.id, req.body);
+    if (perfil?.id) {
+      await calculateMatchingForCandidate(perfil.id);
+    }
     res.json(perfil);
   } catch (err) {
     next(err);
@@ -156,6 +160,9 @@ export async function subirCvPerfilHandler(req, res, next) {
       return res.status(400).json({ error: "Debes adjuntar un archivo PDF." });
     }
     const result = await subirCvCandidato(req.user.id, req.file.path);
+    if (result?.candidatoId) {
+      await calculateMatchingForCandidate(result.candidatoId);
+    }
     res.json({ message: "CV subido correctamente.", cvPath: result.cvPath });
   } catch (err) {
     next(err);

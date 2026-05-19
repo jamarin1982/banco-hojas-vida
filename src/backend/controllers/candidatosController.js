@@ -6,6 +6,7 @@ import {
   updateCandidate,
   updateCandidateCvPath,
 } from "../services/candidatosService.js";
+import { calculateMatchingForCandidate } from "../services/vacantesService.js";
 import { readCvPdf } from "../utils/readCvPdf.js";
 import { analyzeCvWithGemini } from "../utils/cvGemini.js";
 
@@ -33,6 +34,7 @@ export async function updateCandidateHandler(req, res, next) {
   try {
     const { id } = req.params;
     await updateCandidate(id, req.body);
+    await calculateMatchingForCandidate(parseInt(id));
     res.json({ message: "Candidato actualizado" });
   } catch (error) {
     next(error);

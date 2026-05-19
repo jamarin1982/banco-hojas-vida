@@ -308,7 +308,7 @@ export async function subirCvCandidato(usuarioId, cvPath) {
     throw createHttpError(404, "No tienes un perfil de candidato asociado.");
   }
   await pool.query("UPDATE candidatos SET cv_path = ? WHERE id = ?", [cvPath, usuario.candidato_id]);
-  return { cvPath };
+  return { cvPath, candidatoId: usuario.candidato_id };
 }
 
 export async function analizarCvCandidato(usuarioId) {
