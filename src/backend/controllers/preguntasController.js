@@ -3,7 +3,6 @@ import {
   createPregunta,
   updatePregunta,
   deletePregunta,
-  deletePreguntasByVacante,
   generarPreguntasIA,
   saveCandidatoRespuestas,
   getCandidatoRespuestas,

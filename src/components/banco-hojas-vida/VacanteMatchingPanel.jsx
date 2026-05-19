@@ -1,9 +1,33 @@
+import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Briefcase, MapPin, CheckCircle, Zap, TrendingUp } from "lucide-react";
+import { Briefcase, MapPin, CheckCircle, Zap, TrendingUp, Sparkles, Loader2 } from "lucide-react";
 import { motion as Motion } from "framer-motion";
+import { recalculateVacanteMatchingAI } from "@/services/vacantesApi";
+import { useAuth } from "@/context/AuthContext";
 
-export function VacanteMatchingPanel({ vacante, topCandidates = [] }) {
+export function VacanteMatchingPanel({ vacante, topCandidates = [], onRefresh }) {
+  const { token } = useAuth();
+  const [loadingAI, setLoadingAI] = useState(false);
+  const [aiMessage, setAiMessage] = useState("");
+
+  const handleAIMatching = async () => {
+    if (!vacante?.id || !token) return;
+    setLoadingAI(true);
+    setAiMessage("Analizando candidatos con IA...");
+    try {
+      const result = await recalculateVacanteMatchingAI(vacante.id, token);
+      setAiMessage(`IA evaluó ${result.scoresCount} candidatos`);
+      if (onRefresh) await onRefresh(vacante.id);
+    } catch (err) {
+      setAiMessage(`Error: ${err.message}`);
+    } finally {
+      setLoadingAI(false);
+      setTimeout(() => setAiMessage(""), 5000);
+    }
+  };
+
   if (!vacante) {
     return (
       <div className="rounded-2xl border border-slate-300 border-dashed p-12 text-center text-slate-500">
@@ -91,6 +115,28 @@ export function VacanteMatchingPanel({ vacante, topCandidates = [] }) {
             Matching automático activado · {topMatches.length} candidatos encontrados
           </p>
         </div>
+
+        <Button
+          onClick={handleAIMatching}
+          disabled={loadingAI || topCandidates.length === 0}
+          className="w-full gap-2 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white"
+        >
+          {loadingAI ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Analizando con IA...
+            </>
+          ) : (
+            <>
+              <Sparkles className="h-4 w-4" />
+              Recalcular matching con IA
+            </>
+          )}
+        </Button>
+
+        {aiMessage && (
+          <p className="text-xs text-center text-slate-500">{aiMessage}</p>
+        )}
       </Motion.div>
 
       {/* Candidatos sugeridos */}
@@ -136,11 +182,7 @@ export function VacanteMatchingPanel({ vacante, topCandidates = [] }) {
                         className={`rounded-full px-3 py-1 text-sm font-bold flex items-center gap-1 ${
                           candidate.score_total >= 85
                             ? "bg-emerald-100 text-emerald-700"
-                            : candidate.score_total >= 70
-                            ? "bg-blue-100 text-blue-700"
-                            : candidate.score_total >= 50
-                            ? "bg-yellow-100 text-yellow-700"
-                            : "bg-slate-100 text-slate-700"
+                            : "bg-blue-100 text-blue-700"
                         }`}
                       >
                         <TrendingUp className="h-3 w-3" />

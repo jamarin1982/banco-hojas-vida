@@ -36,8 +36,8 @@ export function usePortalVacantes() {
     try {
       setLoading(true);
       setError(null);
-      const data = await fetchVacantes("Activa");
-      setVacantes(data);
+      const result = await fetchVacantes("Activa");
+      setVacantes(result.data);
     } catch {
       setError("No se pudieron cargar las vacantes. Verifica la conexión con el servidor.");
     } finally {

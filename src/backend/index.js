@@ -6,8 +6,9 @@ import candidatosRoutes from "./routes/candidatos.js";
 import vacantesRoutes from "./routes/vacantes.js";
 import preguntasRoutes from "./routes/preguntas.js";
 import dashboardRoutes from "./routes/dashboard.js";
-import { assertDatabaseConnection } from "./db.js";
+import { assertDatabaseConnection } from "./db.ts";
 import { requestContext } from "./middlewares/requestContext.js";
+import { globalLimiter } from "./middlewares/rateLimiter.js";
 import { logger } from "./utils/logger.js";
 import { getMetricsSnapshot } from "./utils/metrics.js";
 
@@ -19,6 +20,7 @@ const port = process.env.PORT || 4000;
 app.use(cors());
 app.use(express.json());
 app.use(requestContext);
+app.use(globalLimiter);
 
 app.use("/uploads", express.static("uploads"));
 

@@ -1,8 +1,15 @@
-import { pool } from "../db.js";
+import { pool } from "../db.ts";
 import { logger } from "../utils/logger.js";
+import { cacheGet, cacheSet } from "../utils/cache.js";
+
+const DASHBOARD_TTL = 5 * 60 * 1000;
+const MATCHES_TTL = 10 * 60 * 1000;
 
 export async function getDashboardStats() {
   try {
+    const cached = cacheGet("dashboard:stats");
+    if (cached && cached.totalCandidatos > 0) return cached;
+
     // 1. Total Candidatos
     const [[candTotal]] = await pool.query("SELECT COUNT(*) as total FROM candidatos");
 
@@ -69,7 +76,7 @@ export async function getDashboardStats() {
     const [[matchAltoTotal]] = await pool.query(
       `SELECT COUNT(*) as total FROM vacante_candidato_score vcs
        JOIN vacantes v ON v.id = vcs.vacante_id
-       WHERE v.estado = 'Activa' AND vcs.score_total >= 75`
+       WHERE v.estado = 'Activa' AND vcs.score_total >= 70`
     );
 
     // 12. Top ciudades de candidatos
@@ -115,15 +122,15 @@ export async function getDashboardStats() {
     const [mejorMatchPorCandidato] = await pool.query(
       `SELECT vcs.candidato_id, 
         MAX(vcs.score_total) as mejor_match,
-        v.id as vacante_id,
-        v.titulo as vacante_titulo
+        ANY_VALUE(v.id) as vacante_id,
+        ANY_VALUE(v.titulo) as vacante_titulo
        FROM vacante_candidato_score vcs
        JOIN vacantes v ON v.id = vcs.vacante_id
        WHERE v.estado = 'Activa'
        GROUP BY vcs.candidato_id`
     );
 
-    return {
+    const stats = {
       // KPIs principales
       totalCandidatos: candTotal.total || 0,
       inmediatos: candInmediatos.total || 0,
@@ -167,6 +174,9 @@ export async function getDashboardStats() {
         mejorMatchPorCandidato.map(r => [r.candidato_id, { score: Math.round(r.mejor_match), vacante: r.vacante_titulo }])
       ),
     };
+
+    cacheSet("dashboard:stats", stats, DASHBOARD_TTL);
+    return stats;
   } catch (error) {
     logger.error("Error obteniendo stats del dashboard:", error);
     throw error;
@@ -175,19 +185,27 @@ export async function getDashboardStats() {
 
 export async function getCandidateMatches() {
   try {
+    const cached = cacheGet("dashboard:matches");
+    if (cached && Object.keys(cached).length > 0) return cached;
+
     const [matches] = await pool.query(
       `SELECT vcs.candidato_id, 
         MAX(vcs.score_total) as mejor_match,
-        v.id as vacante_id,
-        v.titulo as vacante_titulo
+        ANY_VALUE(v.id) as vacante_id,
+        ANY_VALUE(v.titulo) as vacante_titulo
        FROM vacante_candidato_score vcs
        JOIN vacantes v ON v.id = vcs.vacante_id
        WHERE v.estado = 'Activa'
        GROUP BY vcs.candidato_id`
     );
-    return Object.fromEntries(
+    const result = Object.fromEntries(
       matches.map(r => [r.candidato_id, { score: Math.round(r.mejor_match), vacanteId: r.vacante_id, vacante: r.vacante_titulo }])
     );
+
+    if (Object.keys(result).length > 0) {
+      cacheSet("dashboard:matches", result, MATCHES_TTL);
+    }
+    return result;
   } catch (error) {
     logger.error("Error obteniendo matches de candidatos:", error);
     throw error;

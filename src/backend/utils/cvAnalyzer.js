@@ -109,10 +109,6 @@ function extractCargo(text) {
  * DESCARTA fechas de nacimiento y busca contexto laboral
  */
 function extractExperiencia(text) {
-  // Palabras clave que indican contexto laboral
-  const laborKeywords = /(?:desde|trabajé|trabajo|empresa|puesto|cargo|experiencia|laboral|profesional|desempeño|posición|Role|Position|Employment|Empresa|Compañía|Socio|Director|Gerente|Jefe|Coordinador|Especialista|Consultor|Analista|Desarrollador|Ingeniero|Manager|Lead|Senior|Junior)/i;
-
-  // Patrones de fechas con contexto
   const dateContextPatterns = [
     // "desde enero 2010" o "desde 2010"
     /\bdesde\s+(?:(?:enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre)\s+)?(19\d{2}|20\d{2})/gi,
@@ -186,7 +182,6 @@ function extractExperiencia(text) {
  */
 function extractCertificaciones(text) {
   const certs = [];
-  const textLower = text.toLowerCase();
 
   for (const [cert, pattern] of Object.entries(PATTERNS.certificaciones)) {
     if (pattern.test(text)) {

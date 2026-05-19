@@ -1,41 +1,43 @@
-const LOG_LEVEL = process.env.LOG_LEVEL || "info";
-const levels = {
-  debug: 10,
-  info: 20,
-  warn: 30,
-  error: 40,
-};
+import winston from "winston";
+import DailyRotateFile from "winston-daily-rotate-file";
+import path from "path";
+import { fileURLToPath } from "url";
 
-function canLog(level) {
-  const current = levels[LOG_LEVEL] ?? levels.info;
-  const incoming = levels[level] ?? levels.info;
-  return incoming >= current;
-}
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const logDir = path.resolve(__dirname, "..", "logs");
 
-function emit(level, message, meta) {
-  if (!canLog(level)) return;
+const logLevel = process.env.LOG_LEVEL || (process.env.NODE_ENV === "production" ? "info" : "debug");
 
-  const payload = {
-    ts: new Date().toISOString(),
-    level,
-    message,
-  };
+const fileTransport = new DailyRotateFile({
+  filename: path.join(logDir, "app-%DATE%.log"),
+  datePattern: "YYYY-MM-DD",
+  zippedArchive: true,
+  maxSize: "20m",
+  maxFiles: "14d",
+  format: winston.format.combine(
+    winston.format.timestamp(),
+    winston.format.errors({ stack: true }),
+    winston.format.json()
+  ),
+});
 
-  if (meta && Object.keys(meta).length > 0) {
-    payload.meta = meta;
-  }
+const consoleFormat = winston.format.combine(
+  winston.format.timestamp(),
+  winston.format.errors({ stack: true }),
+  winston.format.printf(({ timestamp, level, message, ...meta }) => {
+    const metaStr = Object.keys(meta).length > 0 ? ` ${JSON.stringify(meta)}` : "";
+    return `${timestamp} [${level.toUpperCase()}] ${message}${metaStr}`;
+  })
+);
 
-  const line = JSON.stringify(payload);
-  if (level === "error" || level === "warn") {
-    console.error(line);
-    return;
-  }
-  console.log(line);
-}
-
-export const logger = {
-  debug: (message, meta = {}) => emit("debug", message, meta),
-  info: (message, meta = {}) => emit("info", message, meta),
-  warn: (message, meta = {}) => emit("warn", message, meta),
-  error: (message, meta = {}) => emit("error", message, meta),
-};
+export const logger = winston.createLogger({
+  level: logLevel,
+  transports: [
+    new winston.transports.Console({
+      format: consoleFormat,
+      silent: process.env.NODE_ENV === "test",
+    }),
+    fileTransport,
+  ],
+  exitOnError: false,
+});

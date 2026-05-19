@@ -1,11 +1,17 @@
-import { pool } from "../db.js";
+import { pool } from "../db.ts";
 import { createHttpError } from "../utils/httpError.js";
 import { logger } from "../utils/logger.js";
 import { sendVacanteNotificationEmail } from "../utils/mailer.js";
-import { analyzeCvWithGemini } from "../utils/cvGemini.js";
+import { cacheInvalidate } from "../utils/cache.js";
+import { mysqlNow } from "../utils/mysqlDate.js";
+import {
+  calculateExperienceScore,
+  calculateCertificationsScore,
+} from "./matchingService.ts";
 
-export async function getAllVacantes(estado = null) {
+export async function getAllVacantes(estado = null, page = 1, limit = 20) {
   try {
+    const offset = (page - 1) * limit;
     let query = "SELECT * FROM vacantes";
     const params = [];
 
@@ -14,27 +20,46 @@ export async function getAllVacantes(estado = null) {
       params.push(estado);
     }
 
-    query += " ORDER BY fecha_creacion DESC";
+    query += " ORDER BY fecha_creacion DESC LIMIT ? OFFSET ?";
+    params.push(limit, offset);
+
     const [rows] = await pool.query(query, params);
-    
-    return rows.map((vacante) => ({
-      ...vacante,
-      certificaciones_requeridas: vacante.certificaciones_requeridas
-        ? JSON.parse(vacante.certificaciones_requeridas)
-        : [],
-      responsabilidades: vacante.responsabilidades
-        ? JSON.parse(vacante.responsabilidades)
-        : [],
-      requisitos: vacante.requisitos
-        ? JSON.parse(vacante.requisitos)
-        : [],
-      ofrecemos: vacante.ofrecemos
-        ? JSON.parse(vacante.ofrecemos)
-        : [],
-    }));
+
+    let countQuery = "SELECT COUNT(*) as total FROM vacantes";
+    const countParams = [];
+    if (estado) {
+      countQuery += " WHERE estado = ?";
+      countParams.push(estado);
+    }
+    const [[{ total }]] = await pool.query(countQuery, countParams);
+
+    return {
+      data: rows.map((vacante) => ({
+        ...vacante,
+        certificaciones_requeridas: safeParseJson(vacante.certificaciones_requeridas),
+        responsabilidades: safeParseJson(vacante.responsabilidades),
+        requisitos: safeParseJson(vacante.requisitos),
+        ofrecemos: safeParseJson(vacante.ofrecemos),
+      })),
+      total,
+      page: parseInt(page),
+      limit: parseInt(limit),
+      totalPages: Math.ceil(total / limit),
+    };
   } catch (error) {
     logger.error("Error obteniendo vacantes:", error);
     throw error;
+  }
+}
+
+function safeParseJson(value) {
+  if (!value) return [];
+  if (Array.isArray(value)) return value;
+  if (typeof value === "object") return value;
+  try {
+    return JSON.parse(value);
+  } catch {
+    return [];
   }
 }
 
@@ -48,18 +73,10 @@ export async function getVacanteById(id) {
 
     return {
       ...vacante,
-      certificaciones_requeridas: vacante.certificaciones_requeridas
-        ? JSON.parse(vacante.certificaciones_requeridas)
-        : [],
-      responsabilidades: vacante.responsabilidades
-        ? JSON.parse(vacante.responsabilidades)
-        : [],
-      requisitos: vacante.requisitos
-        ? JSON.parse(vacante.requisitos)
-        : [],
-      ofrecemos: vacante.ofrecemos
-        ? JSON.parse(vacante.ofrecemos)
-        : [],
+      certificaciones_requeridas: safeParseJson(vacante.certificaciones_requeridas),
+      responsabilidades: safeParseJson(vacante.responsabilidades),
+      requisitos: safeParseJson(vacante.requisitos),
+      ofrecemos: safeParseJson(vacante.ofrecemos),
     };
   } catch (error) {
     logger.error(`Error obteniendo vacante ${id}:`, error);
@@ -69,7 +86,7 @@ export async function getVacanteById(id) {
 
 export async function createVacante(vacante) {
   try {
-    const now = new Date().toISOString();
+    const now = mysqlNow();
     const [result] = await pool.query(
       `INSERT INTO vacantes
        (titulo, descripcion, resumen, responsabilidades, requisitos, ofrecemos, cargo, ciudad, experiencia_minima, experiencia_maxima,
@@ -99,6 +116,7 @@ export async function createVacante(vacante) {
     );
 
     logger.info(`Vacante creada: ${result.insertId}`);
+    cacheInvalidate("dashboard:");
     return result.insertId;
   } catch (error) {
     logger.error("Error creando vacante:", error);
@@ -108,7 +126,7 @@ export async function createVacante(vacante) {
 
 export async function updateVacante(id, vacante) {
   try {
-    const now = new Date().toISOString();
+    const now = mysqlNow();
     await pool.query(
       `UPDATE vacantes SET
         titulo = ?,
@@ -152,6 +170,7 @@ export async function updateVacante(id, vacante) {
     );
 
     logger.info(`Vacante actualizada: ${id}`);
+    cacheInvalidate("dashboard:");
   } catch (error) {
     logger.error(`Error actualizando vacante ${id}:`, error);
     throw error;
@@ -167,6 +186,7 @@ export async function deleteVacante(id) {
     }
 
     logger.info(`Vacante eliminada: ${id}`);
+    cacheInvalidate("dashboard:");
   } catch (error) {
     logger.error(`Error eliminando vacante ${id}:`, error);
     throw error;
@@ -189,7 +209,7 @@ export async function applyToVacante(vacanteId, usuarioId) {
       throw createHttpError(409, "Ya te has postulado a esta vacante.");
     }
 
-    const now = new Date().toISOString();
+    const now = mysqlNow();
     await pool.query(
       `INSERT INTO vacante_candidato_score (vacante_id, candidato_id, score_total, score_experiencia, score_certificaciones, score_ubicacion, score_disponibilidad, estado_aplicacion, fecha_score)
        VALUES (?, ?, 0, 0, 0, 0, 0, 'Aplicó', ?)`,
@@ -197,6 +217,7 @@ export async function applyToVacante(vacanteId, usuarioId) {
     );
 
     logger.info(`Candidato ${usuario.candidato_id} postulado a vacante ${vacanteId}`);
+    cacheInvalidate("dashboard:");
     return { message: "Te has postulado exitosamente a la vacante." };
   } catch (error) {
     if (error.status) throw error;
@@ -208,9 +229,9 @@ export async function applyToVacante(vacanteId, usuarioId) {
 // Matching automático
 export async function calculateMatchingScores(vacanteId) {
   try {
-    const now = new Date().toISOString();
+    const now = mysqlNow();
     const vacante = await getVacanteById(vacanteId);
-    const [[{ results }]] = await pool.query(
+    await pool.query(
       "SELECT COUNT(*) as results FROM candidatos WHERE estado IN ('Aplicó', 'Aprobado')"
     );
 
@@ -285,9 +306,201 @@ export async function calculateMatchingScores(vacanteId) {
     }
 
     logger.info(`Scores de matching calculados para vacante ${vacanteId}`);
+    cacheInvalidate("dashboard:");
     return scores;
   } catch (error) {
     logger.error(`Error calculando matching scores:`, error);
+    throw error;
+  }
+}
+
+export async function calculateMatchingForCandidate(candidatoId) {
+  try {
+    const now = mysqlNow();
+    const [[candidato]] = await pool.query("SELECT * FROM candidatos WHERE id = ?", [candidatoId]);
+    if (!candidato) return 0;
+
+    const [vacantes] = await pool.query("SELECT * FROM vacantes WHERE estado = 'Activa'");
+    if (vacantes.length === 0) return 0;
+
+    let scoresSaved = 0;
+    for (const vacante of vacantes) {
+      const scoreExperiencia = calculateExperienceScore(
+        candidato.experiencia,
+        vacante.experiencia_minima,
+        vacante.experiencia_maxima
+      );
+      const scoreCertificaciones = calculateCertificationsScore(
+        candidato.certificaciones || "",
+        vacante.certificaciones_requeridas || []
+      );
+      const scoreUbicacion = candidato.ciudad === vacante.ciudad ? 100 : 40;
+      const scoreDisponibilidad = candidato.disponibilidad === vacante.disponibilidad ? 100 : 70;
+      const scoreTotal = Math.round(
+        scoreExperiencia * 0.35 +
+        scoreCertificaciones * 0.35 +
+        scoreUbicacion * 0.15 +
+        scoreDisponibilidad * 0.15
+      );
+
+      await pool.query(
+        `INSERT INTO vacante_candidato_score
+         (vacante_id, candidato_id, score_total, score_experiencia, score_certificaciones,
+          score_ubicacion, score_disponibilidad, estado_aplicacion, fecha_score)
+         VALUES (?, ?, ?, ?, ?, ?, ?, 'Sugerido', ?)
+         ON DUPLICATE KEY UPDATE
+         score_total = ?, score_experiencia = ?, score_certificaciones = ?,
+         score_ubicacion = ?, score_disponibilidad = ?, fecha_score = ?`,
+        [
+          vacante.id, candidatoId, scoreTotal, scoreExperiencia, scoreCertificaciones,
+          scoreUbicacion, scoreDisponibilidad, now,
+          scoreTotal, scoreExperiencia, scoreCertificaciones,
+          scoreUbicacion, scoreDisponibilidad, now,
+        ]
+      );
+      scoresSaved++;
+    }
+
+    logger.info(`Matching calculado para candidato ${candidatoId} contra ${scoresSaved} vacantes activas`);
+    cacheInvalidate("dashboard:");
+    return scoresSaved;
+  } catch (error) {
+    logger.error(`Error calculando matching para candidato ${candidatoId}:`, error);
+    return 0;
+  }
+}
+
+export async function calculateMatchingWithAI(vacanteId) {
+  try {
+    const now = mysqlNow();
+    const vacante = await getVacanteById(vacanteId);
+
+    const [candidatos] = await pool.query(
+      "SELECT * FROM candidatos WHERE estado IN ('Aplicó', 'Aprobado') ORDER BY id DESC"
+    );
+
+    if (candidatos.length === 0) {
+      logger.info(`No hay candidatos para matching IA en vacante ${vacanteId}`);
+      return [];
+    }
+
+    const vacanteInfo = `
+TÍTULO: ${vacante.titulo}
+CARGO: ${vacante.cargo}
+CIUDAD: ${vacante.ciudad}
+EXPERIENCIA REQUERIDA: ${vacante.experiencia_minima} a ${vacante.experiencia_maxima} años
+CERTIFICACIONES REQUERIDAS: ${(vacante.certificaciones_requeridas || []).join(", ") || "Ninguna específica"}
+DISPONIBILIDAD: ${vacante.disponibilidad}
+JORNADA: ${vacante.jornada}
+REQUISITOS: ${(vacante.requisitos || []).join("; ") || "No especificados"}
+RESPONSABILIDADES: ${(vacante.responsabilidades || []).join("; ") || "No especificadas"}
+OFRECEMOS: ${(vacante.ofrecemos || []).join("; ") || "No especificado"}
+DESCRIPCIÓN: ${vacante.descripcion || "No disponible"}
+RESUMEN: ${vacante.resumen || "No disponible"}
+`.trim();
+
+    const scores = [];
+
+    for (const candidato of candidatos) {
+      const candidatoInfo = `
+NOMBRE: ${candidato.nombre}
+CIUDAD: ${candidato.ciudad}
+CARGO ACTUAL/DESEADO: ${candidato.cargo}
+AÑOS DE EXPERIENCIA: ${candidato.experiencia}
+CERTIFICACIONES: ${candidato.certificaciones || "Ninguna registrada"}
+DISPONIBILIDAD: ${candidato.disponibilidad || "No especificada"}
+JORNADA: ${candidato.jornada || "No especificada"}
+OBSERVACIONES/RESUMEN CV: ${candidato.observaciones || "No disponible"}
+`.trim();
+
+      const prompt = `Eres un experto reclutador de talento humano. Evalúa qué tan bien coincide este candidato con la vacante.
+
+VACANTE:
+${vacanteInfo}
+
+CANDIDATO:
+${candidatoInfo}
+
+Instrucciones:
+1. Analiza TODA la información del candidato y compárala con los requisitos de la vacante.
+2. Considera experiencia, certificaciones, ubicación, disponibilidad y el contenido del CV (observaciones).
+3. Entiende sinónimos y contextos: "liderazgo de equipos" equivale a "manejo de grupos", "JavaScript" implica conocimiento de frameworks como React, etc.
+4. Evalúa si la experiencia del candidato es relevante para las responsabilidades de la vacante.
+5. Considera si las certificaciones del candidato cubren las requeridas (aunque usen nombres diferentes).
+
+Responde ÚNICAMENTE con un JSON en este formato exacto, sin texto adicional:
+{"score": número_entre_0_y_100, "justificacion": "breve explicación de 1-2 oraciones"}
+
+Reglas:
+- score: número entero entre 0 y 100
+- justificacion: texto corto explicando por qué ese score
+- No inventes información que no esté en los datos
+- Sé objetivo y profesional`;
+
+      try {
+        const { GoogleGenerativeAI } = await import("@google/generative-ai");
+        const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+        const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash";
+
+        if (!GEMINI_API_KEY) {
+          logger.warn("Gemini API key no configurada, omitiendo matching IA");
+          continue;
+        }
+
+        const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+        const model = genAI.getGenerativeModel({ model: GEMINI_MODEL });
+
+        logger.info(`Analizando candidato ${candidato.nombre} con IA para vacante ${vacanteId}`);
+        const result = await model.generateContent(prompt);
+        const raw = result.response.text().trim();
+
+        const cleaned = raw
+          .replace(/^```json\s*/i, "")
+          .replace(/^```\s*/i, "")
+          .replace(/\s*```$/i, "")
+          .trim();
+
+        let parsed;
+        try {
+          parsed = JSON.parse(cleaned);
+        } catch {
+          const match = cleaned.match(/\{[\s\S]*\}/);
+          if (!match) {
+            logger.warn(`IA no devolvió JSON válido para candidato ${candidato.id}`);
+            continue;
+          }
+          parsed = JSON.parse(match[0]);
+        }
+
+        const scoreTotal = Math.min(100, Math.max(0, Math.round(parsed.score || 0)));
+
+        await pool.query(
+          `INSERT INTO vacante_candidato_score
+           (vacante_id, candidato_id, score_total, score_experiencia, score_certificaciones,
+            score_ubicacion, score_disponibilidad, estado_aplicacion, fecha_score)
+           VALUES (?, ?, ?, 0, 0, 0, 0, 'Sugerido IA', ?)
+           ON DUPLICATE KEY UPDATE
+           score_total = ?, estado_aplicacion = 'Sugerido IA', fecha_score = ?`,
+          [vacanteId, candidato.id, scoreTotal, now, scoreTotal, now]
+        );
+
+        scores.push({
+          candidatoId: candidato.id,
+          scoreTotalValue: scoreTotal,
+          justificacion: parsed.justificacion || "",
+        });
+
+        logger.info(`IA: ${candidato.nombre} → ${scoreTotal}% para vacante ${vacanteId}`);
+      } catch (err) {
+        logger.error(`Error IA para candidato ${candidato.id}:`, err.message);
+      }
+    }
+
+    cacheInvalidate("dashboard:");
+    logger.info(`Matching IA completado para vacante ${vacanteId}: ${scores.length} candidatos evaluados`);
+    return scores;
+  } catch (error) {
+    logger.error(`Error en matching IA para vacante ${vacanteId}:`, error);
     throw error;
   }
 }
@@ -406,7 +619,7 @@ export async function notificarCandidatosMatch(vacanteId) {
        FROM vacante_candidato_score vcs
        JOIN candidatos c ON vcs.candidato_id = c.id
        JOIN usuarios u ON u.candidato_id = c.id
-       WHERE vcs.vacante_id = ? AND vcs.score_total >= 50`,
+        WHERE vcs.vacante_id = ? AND vcs.score_total >= 70`,
       [vacanteId]
     );
 
@@ -446,9 +659,9 @@ export async function getTopCandidatesForVacante(vacanteId, limit = 10) {
         c.certificaciones, c.disponibilidad, c.jornada
        FROM vacante_candidato_score vcs
        JOIN candidatos c ON vcs.candidato_id = c.id
-       WHERE vcs.vacante_id = ?
-       ORDER BY vcs.score_total DESC
-       LIMIT ?`,
+        WHERE vcs.vacante_id = ? AND vcs.score_total >= 70
+        ORDER BY vcs.score_total DESC
+        LIMIT ?`,
       [vacanteId, limit]
     );
 
@@ -459,35 +672,4 @@ export async function getTopCandidatesForVacante(vacanteId, limit = 10) {
   }
 }
 
-function calculateExperienceScore(candidateExp, minExp, maxExp) {
-  if (!candidateExp) return 0;
 
-  const exp = parseInt(candidateExp);
-  if (exp < minExp) {
-    return Math.max(0, (exp / minExp) * 100);
-  }
-  if (exp > maxExp) {
-    return 100;
-  }
-  return 100;
-}
-
-function calculateCertificationsScore(candidateCerts, requiredCerts) {
-  if (!candidateCerts || requiredCerts.length === 0) return 50;
-
-  const candidateCertsArray = typeof candidateCerts === "string"
-    ? candidateCerts.split(",").map((c) => c.trim().toLowerCase())
-    : candidateCerts;
-
-  const requiredCertsArray = Array.isArray(requiredCerts)
-    ? requiredCerts.map((c) => c.toLowerCase())
-    : [];
-
-  if (requiredCertsArray.length === 0) return 80;
-
-  const matches = requiredCertsArray.filter((req) =>
-    candidateCertsArray.some((cand) => cand.includes(req) || req.includes(cand))
-  ).length;
-
-  return (matches / requiredCertsArray.length) * 100;
-}

@@ -1,17 +1,31 @@
-import { pool } from "../db.js";
+import { pool } from "../db.ts";
 import { analyzeCv } from "../utils/cvAnalyzer.js";
 import { createHttpError } from "../utils/httpError.js";
 import { readCvPdf } from "../utils/readCvPdf.js";
+import { cacheInvalidate } from "../utils/cache.js";
+import { logger } from "../utils/logger.js";
+import { calculateMatchingForCandidate } from "./vacantesService.js";
 
-export async function getAllCandidates() {
+export async function getAllCandidates(page = 1, limit = 20) {
+  const offset = (page - 1) * limit;
   const [rows] = await pool.query(`
     SELECT c.*, 
       CASE WHEN u.id IS NOT NULL THEN 1 ELSE 0 END as tiene_usuario
     FROM candidatos c
     LEFT JOIN usuarios u ON u.candidato_id = c.id
     ORDER BY c.id DESC
-  `);
-  return rows;
+    LIMIT ? OFFSET ?
+  `, [limit, offset]);
+
+  const [[{ total }]] = await pool.query("SELECT COUNT(*) as total FROM candidatos");
+
+  return {
+    data: rows,
+    total,
+    page: parseInt(page),
+    limit: parseInt(limit),
+    totalPages: Math.ceil(total / limit),
+  };
 }
 
 export async function createCandidate(candidate) {
@@ -33,7 +47,12 @@ export async function createCandidate(candidate) {
     ]
   );
 
-  return result.insertId;
+  cacheInvalidate("dashboard:");
+  const candidateId = result.insertId;
+  calculateMatchingForCandidate(candidateId).catch((err) => {
+    logger.warn(`Error calculando matching para nuevo candidato ${candidateId}:`, err.message);
+  });
+  return candidateId;
 }
 
 export async function updateCandidate(id, candidate) {
@@ -64,14 +83,17 @@ export async function updateCandidate(id, candidate) {
       id,
     ]
   );
+  cacheInvalidate("dashboard:");
 }
 
 export async function deleteCandidate(id) {
   await pool.query("DELETE FROM candidatos WHERE id = ?", [id]);
+  cacheInvalidate("dashboard:");
 }
 
 export async function updateCandidateCvPath(id, cvPath) {
   await pool.query("UPDATE candidatos SET cv_path = ? WHERE id = ?", [cvPath, id]);
+  cacheInvalidate("dashboard:");
 }
 
 export async function analyzeCandidateCv(id) {

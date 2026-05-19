@@ -65,9 +65,16 @@ export default function BancoHojasVidaMVP() {
     handleNewVacante,
     preguntas,
     setPreguntas,
+    loadTopCandidates,
   } = useVacantesManager();
 
   const [notification, setNotification] = useState(null);
+
+  const handleDoubleClickVacante = (vacante) => {
+    handleSelectVacante(vacante);
+    setActiveTab("matching");
+    loadTopCandidates(vacante.id);
+  };
 
   useEffect(() => {
     if (analyzeError) {
@@ -231,6 +238,7 @@ export default function BancoHojasVidaMVP() {
                   vacantes={vacantes}
                   selectedVacante={selectedVacante}
                   onSelect={handleSelectVacante}
+                  onDoubleClick={handleDoubleClickVacante}
                   onDelete={handleDeleteVacante}
                   onNew={handleNewVacante}
                   isLoading={vacanteLoading}
@@ -253,7 +261,7 @@ export default function BancoHojasVidaMVP() {
           {/* Tab: Matching */}
           <TabsContent value="matching">
             <div className="rounded-2xl bg-white p-6 shadow-sm border border-teal-200">
-              <VacanteMatchingPanel vacante={selectedVacante} topCandidates={topCandidates} />
+              <VacanteMatchingPanel vacante={selectedVacante} topCandidates={topCandidates} onRefresh={loadTopCandidates} />
             </div>
           </TabsContent>
         </Tabs>

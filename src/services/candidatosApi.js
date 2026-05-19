@@ -43,12 +43,15 @@ export function mapCandidateToForm(candidate) {
   };
 }
 
-export async function fetchCandidates() {
-  const response = await fetch(`${API_BASE_URL}/api/candidatos`, {
+export async function fetchCandidates(page = 1, limit = 20) {
+  const response = await fetch(`${API_BASE_URL}/api/candidatos?page=${page}&limit=${limit}`, {
     headers: authHeaders(),
   });
   const data = await toJson(response);
-  return data.map(parseCandidate);
+  return {
+    ...data,
+    data: data.data.map(parseCandidate),
+  };
 }
 
 export async function createCandidate(payload) {

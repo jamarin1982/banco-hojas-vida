@@ -1,4 +1,4 @@
-import { pool } from "../db.js";
+import { pool } from "../db.ts";
 import { createHttpError } from "../utils/httpError.js";
 import { logger } from "../utils/logger.js";
 import { callGemini } from "../utils/cvGemini.js";

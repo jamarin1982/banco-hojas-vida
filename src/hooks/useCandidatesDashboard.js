@@ -15,6 +15,7 @@ import { EMPTY_CANDIDATE_FORM } from "@/features/candidatos/model";
 export function useCandidatesDashboard() {
   const { token } = useAuth();
   const [candidates, setCandidates] = useState([]);
+  const [pagination, setPagination] = useState({ page: 1, limit: 20, total: 0, totalPages: 0 });
   const [editingCandidate, setEditingCandidate] = useState(null);
   const [activeTab, setActiveTab] = useState("talento");
   const [query, setQuery] = useState("");
@@ -28,10 +29,17 @@ export function useCandidatesDashboard() {
   const [candidateMatches, setCandidateMatches] = useState({});
 
   useEffect(() => {
-    fetchCandidates()
-      .then((data) => setCandidates(data))
+    fetchCandidates(pagination.page, pagination.limit)
+      .then((result) => {
+        setCandidates(result.data);
+        setPagination((prev) => ({
+          ...prev,
+          total: result.total,
+          totalPages: result.totalPages,
+        }));
+      })
       .catch((err) => console.error("Error cargando candidatos:", err));
-  }, []);
+  }, [pagination.page, pagination.limit]);
 
   useEffect(() => {
     if (token) {
@@ -128,8 +136,13 @@ export function useCandidatesDashboard() {
       await uploadCandidateCv(candidateId, form.cv);
     }
 
-    const updatedCandidates = await fetchCandidates();
-    setCandidates(updatedCandidates);
+    const updatedCandidates = await fetchCandidates(pagination.page, pagination.limit);
+    setCandidates(updatedCandidates.data);
+    setPagination((prev) => ({
+      ...prev,
+      total: updatedCandidates.total,
+      totalPages: updatedCandidates.totalPages,
+    }));
     setEditingCandidate(null);
     setActiveTab("talento");
     setForm(EMPTY_CANDIDATE_FORM);
@@ -206,6 +219,8 @@ export function useCandidatesDashboard() {
     activeTab,
     setActiveTab,
     candidates,
+    pagination,
+    setPagination,
     query,
     setQuery,
     filterCity,

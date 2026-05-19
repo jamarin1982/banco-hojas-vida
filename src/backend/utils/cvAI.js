@@ -45,7 +45,6 @@ function setCacheAnalysis(text, data) {
 }
 
 async function callOllamaWithRetry(prompt) {
-  let lastError = null;
   const startTime = performance.now();
 
   for (let attempt = 1; attempt <= OLLAMA_RETRIES + 1; attempt += 1) {
@@ -58,6 +57,7 @@ async function callOllamaWithRetry(prompt) {
         timeout: OLLAMA_TIMEOUT_MS,
       });
 
+      const startTime = performance.now();
       const response = await fetch(`${OLLAMA_URL}/api/generate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -67,10 +67,10 @@ async function callOllamaWithRetry(prompt) {
           prompt,
           stream: false,
           options: {
-            temperature: 0.1, // Reducido para salidas más consistentes
+            temperature: 0.1,
             top_p: 0.9,
             top_k: 40,
-            num_predict: 500, // Limitar longitud de respuesta
+            num_predict: 500,
           },
         }),
       });
@@ -80,10 +80,11 @@ async function callOllamaWithRetry(prompt) {
         throw new Error(`Ollama error: ${response.status} ${errText}`);
       }
 
+      const data = await response.json();
+      const duration = (performance.now() - startTime).toFixed(2);
       logger.info(`Ollama respondió exitosamente en ${duration}ms`);
       return data;
     } catch (error) {
-      lastError = error;
       const isTimeout = error.name === "AbortError";
       const duration = (performance.now() - startTime).toFixed(2);
       
@@ -150,7 +151,7 @@ CV: ${text.slice(0, 2000)}`;
     let parsed;
     try {
       parsed = JSON.parse(match[0]);
-    } catch (e) {
+    } catch {
       logger.warn("JSON parse error, usando valores por defecto");
       parsed = {
         nombre: "Candidato",

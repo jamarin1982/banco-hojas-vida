@@ -5,18 +5,20 @@ import {
   updateVacante,
   deleteVacante,
   calculateMatchingScores,
+  calculateMatchingWithAI,
   getTopCandidatesForVacante,
   applyToVacante as applyToVacanteService,
   notificarCandidatosMatch,
   generarPerfilVacante,
 } from "../services/vacantesService.js";
-import { logger } from "../utils/logger.js";
 
 export async function listVacantes(req, res, next) {
   try {
     const { estado } = req.query;
-    const vacantes = await getAllVacantes(estado);
-    res.json(vacantes);
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const result = await getAllVacantes(estado, page, limit);
+    res.json(result);
   } catch (error) {
     next(error);
   }
@@ -93,6 +95,25 @@ export async function recalculateMatchingHandler(req, res, next) {
     res.json({ 
       message: "Matching recalculado",
       scoresCount: scores.length
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function recalculateMatchingAIHandler(req, res, next) {
+  try {
+    const { id } = req.params;
+    res.setTimeout(120000);
+    const scores = await calculateMatchingWithAI(id);
+    res.json({ 
+      message: "Matching con IA completado",
+      scoresCount: scores.length,
+      scores: scores.map(s => ({
+        candidatoId: s.candidatoId,
+        score: s.scoreTotalValue,
+        justificacion: s.justificacion,
+      }))
     });
   } catch (error) {
     next(error);

@@ -50,8 +50,8 @@ export function useVacantesManager() {
   const loadVacantes = async () => {
     try {
       setLoading(true);
-      const data = await fetchVacantes("Activa");
-      setVacantes(data);
+      const result = await fetchVacantes("Activa");
+      setVacantes(result.data);
       setError(null);
     } catch (err) {
       setError(err.message);
@@ -64,6 +64,7 @@ export function useVacantesManager() {
   const loadTopCandidates = async (vacanteId) => {
     try {
       const data = await fetchTopCandidatesForVacante(vacanteId, 15);
+      console.log(`Candidatos cargados para vacante ${vacanteId}:`, data.length);
       setTopCandidates(data);
     } catch (err) {
       console.error("Error cargando candidatos sugeridos:", err);

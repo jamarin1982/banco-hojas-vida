@@ -1,4 +1,4 @@
-import { pool } from "../db.js";
+import { pool } from "../db.ts";
 import { logger } from "../utils/logger.js";
 
 export async function getCandidatoStats(usuarioId) {

@@ -1,10 +1,10 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Briefcase, MapPin, Clock, Trash2, Edit2, Plus } from "lucide-react";
+import { Briefcase, MapPin, Clock, Trash2, Edit2, Plus, Sparkles } from "lucide-react";
 import { motion as Motion } from "framer-motion";
 
-export function VacantesList({ vacantes, selectedVacante, onSelect, onDelete, onNew, isLoading }) {
+export function VacantesList({ vacantes, selectedVacante, onSelect, onDoubleClick, onDelete, onNew, isLoading }) {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -33,12 +33,18 @@ export function VacantesList({ vacantes, selectedVacante, onSelect, onDelete, on
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.05 }}
               onClick={() => onSelect(vacante)}
-              className={`p-4 rounded-lg border-2 transition-all cursor-pointer ${
+              onDoubleClick={() => onDoubleClick?.(vacante)}
+              className={`p-4 rounded-lg border-2 transition-all cursor-pointer group relative ${
                 selectedVacante?.id === vacante.id
                   ? "border-purple-500 bg-purple-50"
                   : "border-slate-200 bg-white hover:border-slate-300"
               }`}
             >
+              {onDoubleClick && (
+                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Sparkles className="h-3.5 w-3.5 text-purple-400" />
+                </div>
+              )}
               <div className="space-y-3">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">

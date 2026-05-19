@@ -73,7 +73,7 @@ export function DashboardMetrics({ metrics }) {
   const kpiCards = [
     { label: "Candidatos", value: metrics.totalCandidatos, icon: Users, color: "from-teal-500 to-teal-600", bg: "bg-teal-50", iconC: "text-teal-600" },
     { label: "Vacantes activas", value: metrics.vacantesActivas, icon: Briefcase, color: "from-indigo-500 to-indigo-600", bg: "bg-indigo-50", iconC: "text-indigo-600" },
-    { label: "Match ≥ 75%", value: metrics.matchAlto, icon: Target, color: "from-green-500 to-green-600", bg: "bg-green-50", iconC: "text-green-600" },
+    { label: "Match ≥ 70%", value: metrics.matchAlto, icon: Target, color: "from-green-500 to-green-600", bg: "bg-green-50", iconC: "text-green-600" },
     { label: "Sin postulantes", value: metrics.vacantesSinPostulantes, icon: AlertCircle, color: "from-amber-500 to-amber-600", bg: "bg-amber-50", iconC: "text-amber-600" },
     { label: "Score promedio", value: `${metrics.scorePromedio}%`, icon: BarChart3, color: "from-blue-500 to-blue-600", bg: "bg-blue-50", iconC: "text-blue-600" },
     { label: "Con CV", value: metrics.candConCv, icon: FileText, color: "from-cyan-500 to-cyan-600", bg: "bg-cyan-50", iconC: "text-cyan-600" },
@@ -204,7 +204,7 @@ export function DashboardMetrics({ metrics }) {
                     <p className="text-sm font-medium text-slate-800 truncate">{v.titulo}</p>
                     <p className="text-xs text-slate-500">{v.total_aplicaciones} aplicaciones · {v.match_alto} match alto</p>
                   </div>
-                  <span className={`ml-3 text-sm font-bold ${v.score_promedio >= 75 ? "text-green-600" : v.score_promedio >= 50 ? "text-amber-600" : "text-slate-400"}`}>
+                  <span className={`ml-3 text-sm font-bold ${v.score_promedio >= 70 ? "text-green-600" : v.score_promedio >= 50 ? "text-amber-600" : "text-slate-400"}`}>
                     {v.score_promedio || "N/A"}%
                   </span>
                 </div>

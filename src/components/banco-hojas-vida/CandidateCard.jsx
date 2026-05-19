@@ -61,11 +61,11 @@ export function CandidateCard({
                 <div className="flex items-center justify-center gap-1 mb-2">
                   <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
                   <span className="text-sm font-semibold text-slate-600">
-                    {candidate.score > 0 ? "Mejor Match" : "Sin match"}
+                    {candidate.score > 0 ? "Mejor Match" : "Sin vacantes activas"}
                   </span>
                 </div>
-                <p className={`text-3xl font-bold ${candidate.score >= 75 ? "text-green-600" : candidate.score >= 50 ? "text-amber-600" : "text-slate-400"}`}>
-                  {candidate.score > 0 ? `${candidate.score}%` : "N/A"}
+                <p className={`text-3xl font-bold ${candidate.score >= 70 ? "text-green-600" : candidate.score >= 50 ? "text-amber-600" : "text-slate-400"}`}>
+                  {candidate.score > 0 ? `${candidate.score}%` : "0%"}
                 </p>
               </div>
               {candidate.score > 0 && <Progress value={candidate.score} className="h-2" />}

@@ -15,6 +15,7 @@ import {
   analizarCvPerfilGeminiHandler,
 } from "../controllers/authController.js";
 import { requireAuth, requireRole } from "../middlewares/requireAuth.js";
+import { authLimiter, aiLimiter } from "../middlewares/rateLimiter.js";
 
 // Tipos de archivo permitidos para CV
 const CV_MIMETYPES = [
@@ -51,12 +52,12 @@ const uploadCvPerfil = multer({
 
 const router = Router();
 
-// ─── Públicas ─────────────────────────────────────────────────────────────────
+// ─── Públicas ────────────────────────────────────────────────────────────────
 // El registro de candidato acepta multipart/form-data con el CV obligatorio
-router.post("/register", uploadCvRegistro.single("cv"), registerHandler);
-router.post("/login", loginHandler);
-router.post("/forgot-password", forgotPasswordHandler);
-router.post("/reset-password", resetPasswordHandler);
+router.post("/register", authLimiter, uploadCvRegistro.single("cv"), registerHandler);
+router.post("/login", authLimiter, loginHandler);
+router.post("/forgot-password", authLimiter, forgotPasswordHandler);
+router.post("/reset-password", authLimiter, resetPasswordHandler);
 
 // ─── Autenticadas ─────────────────────────────────────────────────────────────
 router.get("/me", requireAuth, meHandler);
@@ -66,8 +67,8 @@ router.get("/mi-perfil", requireAuth, requireRole("candidato"), miPerfilCandidat
 router.put("/mi-perfil", requireAuth, requireRole("candidato"), updateMiPerfilCandidatoHandler);
 router.get("/mis-aplicaciones", requireAuth, requireRole("candidato"), misAplicacionesHandler);
 router.post("/mi-perfil/cv",              requireAuth, requireRole("candidato"), uploadCvPerfil.single("cv"), subirCvPerfilHandler);
-router.post("/mi-perfil/analizar-cv",    requireAuth, requireRole("candidato"), analizarCvPerfilHandler);
-router.post("/mi-perfil/analizar-cv-gemini", requireAuth, requireRole("candidato"),
+router.post("/mi-perfil/analizar-cv",    requireAuth, requireRole("candidato"), aiLimiter, analizarCvPerfilHandler);
+router.post("/mi-perfil/analizar-cv-gemini", requireAuth, requireRole("candidato"), aiLimiter,
   (req, res, next) => { res.setTimeout(90000); next(); },
   analizarCvPerfilGeminiHandler
 );

@@ -1,12 +1,13 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
-import { pool } from "../db.js";
+import { pool } from "../db.ts";
 import { createHttpError } from "../utils/httpError.js";
 import { logger } from "../utils/logger.js";
 import { sendPasswordResetEmail } from "../utils/mailer.js";
 import { readCvFile } from "../utils/readCvFile.js";
 import { analyzeCvWithGemini } from "../utils/cvGemini.js";
+import { mysqlNow } from "../utils/mysqlDate.js";
 
 const JWT_SECRET = process.env.JWT_SECRET || "dev_secret_change_in_production";
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "7d";
@@ -21,14 +22,14 @@ function generateToken(user) {
 }
 
 function safeUser(user) {
-  const { password_hash, ...safe } = user;
+  const { password_hash: _unused, ...safe } = user;
   return safe;
 }
 
 // ─── Registro ─────────────────────────────────────────────────────────────────
 
 export async function registerUser({ nombre, email, password, rol = "candidato", nombreEmpresa, cvPath }) {
-  const now = new Date().toISOString();
+  const now = mysqlNow();
 
   const rolesValidos = ["candidato", "empresa"];
   if (!rolesValidos.includes(rol)) {
@@ -197,15 +198,26 @@ export async function loginUser({ email, password, rolSolicitado = null }) {
 
 export async function getMiPerfilCandidato(usuarioId) {
   const [[usuario]] = await pool.query(
-    "SELECT candidato_id FROM usuarios WHERE id = ?",
+    "SELECT candidato_id, nombre FROM usuarios WHERE id = ?",
     [usuarioId]
   );
-  if (!usuario?.candidato_id) {
-    throw createHttpError(404, "No tienes un perfil de candidato asociado.");
+  if (!usuario) throw createHttpError(404, "Usuario no encontrado.");
+
+  let candidatoId = usuario.candidato_id;
+  if (!candidatoId) {
+    const [cr] = await pool.query(
+      `INSERT INTO candidatos (nombre, ciudad, cargo, experiencia, certificaciones, disponibilidad, jornada, aspiracion, estado, observaciones)
+       VALUES (?, 'Por definir', 'Por definir', 0, '', 'Inmediata', 'Completa', 0, 'Aplicó', '')`,
+      [usuario.nombre]
+    );
+    candidatoId = cr.insertId;
+    await pool.query("UPDATE usuarios SET candidato_id = ? WHERE id = ?", [candidatoId, usuarioId]);
+    logger.info(`Perfil candidato auto-creado para usuario ${usuarioId}`);
   }
+
   const [[candidato]] = await pool.query(
     "SELECT * FROM candidatos WHERE id = ?",
-    [usuario.candidato_id]
+    [candidatoId]
   );
   if (!candidato) throw createHttpError(404, "Perfil de candidato no encontrado.");
 
@@ -219,14 +231,23 @@ export async function getMiPerfilCandidato(usuarioId) {
 
 export async function updateMiPerfilCandidato(usuarioId, datos) {
   const [[usuario]] = await pool.query(
-    "SELECT candidato_id FROM usuarios WHERE id = ?",
+    "SELECT candidato_id, nombre FROM usuarios WHERE id = ?",
     [usuarioId]
   );
-  if (!usuario?.candidato_id) {
-    throw createHttpError(404, "No tienes un perfil de candidato asociado.");
+  if (!usuario) throw createHttpError(404, "Usuario no encontrado.");
+
+  let candidatoId = usuario.candidato_id;
+  if (!candidatoId) {
+    const [cr] = await pool.query(
+      `INSERT INTO candidatos (nombre, ciudad, cargo, experiencia, certificaciones, disponibilidad, jornada, aspiracion, estado, observaciones)
+       VALUES (?, 'Por definir', 'Por definir', 0, '', 'Inmediata', 'Completa', 0, 'Aplicó', '')`,
+      [usuario.nombre]
+    );
+    candidatoId = cr.insertId;
+    await pool.query("UPDATE usuarios SET candidato_id = ? WHERE id = ?", [candidatoId, usuarioId]);
+    logger.info(`Perfil candidato auto-creado para usuario ${usuarioId}`);
   }
 
-  const now = new Date().toISOString();
   const certs = Array.isArray(datos.certificaciones)
     ? datos.certificaciones.join(", ")
     : datos.certificaciones || "";
@@ -348,7 +369,7 @@ export async function resetPassword({ token, newPassword }) {
   }
 
   const password_hash = await bcrypt.hash(newPassword, 12);
-  const now = new Date().toISOString();
+  const now = mysqlNow();
 
   await pool.query(
     "UPDATE usuarios SET password_hash = ?, fecha_actualizacion = ? WHERE id = ?",
