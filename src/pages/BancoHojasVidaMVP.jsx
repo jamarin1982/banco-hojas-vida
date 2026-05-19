@@ -70,6 +70,13 @@ export default function BancoHojasVidaMVP() {
 
   const [notification, setNotification] = useState(null);
 
+  const handleSaveCandidate = async () => {
+    const candidateId = await handleAdd();
+    if (candidateId && selectedVacante?.id) {
+      await loadTopCandidates(selectedVacante.id);
+    }
+  };
+
   const handleDoubleClickVacante = (vacante) => {
     handleSelectVacante(vacante);
     setActiveTab("matching");
@@ -224,7 +231,7 @@ export default function BancoHojasVidaMVP() {
               <CandidateForm
                 form={form}
                 setForm={setForm}
-                handleAdd={handleAdd}
+                handleAdd={handleSaveCandidate}
                 editingCandidate={editingCandidate}
               />
             </div>

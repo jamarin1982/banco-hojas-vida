@@ -146,6 +146,7 @@ export function useCandidatesDashboard() {
     setEditingCandidate(null);
     setActiveTab("talento");
     setForm(EMPTY_CANDIDATE_FORM);
+    return candidateId;
   };
 
   const handleDelete = async (id) => {
