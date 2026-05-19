@@ -135,10 +135,13 @@ export async function updateMiPerfilCandidatoHandler(req, res, next) {
   try {
     const perfil = await updateMiPerfilCandidato(req.user.id, req.body);
     if (perfil?.id) {
-      await calculateMatchingForCandidate(perfil.id);
+      logger.info(`Recalculando matching para candidato ${perfil.id}`);
+      const result = await calculateMatchingForCandidate(perfil.id);
+      logger.info(`Matching recalculado: ${result} vacantes actualizadas`);
     }
     res.json(perfil);
   } catch (err) {
+    logger.error(`Error en updateMiPerfilCandidatoHandler:`, err);
     next(err);
   }
 }
