@@ -53,7 +53,12 @@ export function calculateCertificationsScore(
   if (requiredCertsArray.length === 0) return 80;
 
   const matches = requiredCertsArray.filter((req) =>
-    candidateCertsArray.some((cand) => cand.includes(req) || req.includes(cand))
+    candidateCertsArray.some((cand) => {
+      if (cand === req) return true;
+      const escaped = req.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const regex = new RegExp(`\\b${escaped}\\b`, 'i');
+      return regex.test(cand);
+    })
   ).length;
 
   return (matches / requiredCertsArray.length) * 100;

@@ -134,10 +134,13 @@ export async function miPerfilCandidatoHandler(req, res, next) {
 export async function updateMiPerfilCandidatoHandler(req, res, next) {
   try {
     const perfil = await updateMiPerfilCandidato(req.user.id, req.body);
+    logger.info(`Perfil actualizado: id=${perfil?.id}, nombre=${perfil?.nombre}`);
     if (perfil?.id) {
       logger.info(`Recalculando matching para candidato ${perfil.id}`);
       const result = await calculateMatchingForCandidate(perfil.id);
       logger.info(`Matching recalculado: ${result} vacantes actualizadas`);
+    } else {
+      logger.warn(`No se pudo recalcular matching: perfil.id es ${perfil?.id}`);
     }
     res.json(perfil);
   } catch (err) {
