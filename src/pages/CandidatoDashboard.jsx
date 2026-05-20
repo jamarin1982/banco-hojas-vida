@@ -584,9 +584,11 @@ function TabPerfil({ token }) {
             )}
           </Button>
 
+          {/* Botón local oculto */}
+
           <Button
             type="button"
-            onClick={() => handleAnalyze(false)}
+            onClick={() => handleAnalyze(true)}
             disabled={analyzing || (!perfil?.cv_path && !cvUploaded)}
             className="gap-2 bg-gradient-to-r from-purple-600 to-violet-700 hover:from-purple-700 hover:to-violet-800 text-white"
           >
@@ -594,20 +596,6 @@ function TabPerfil({ token }) {
               <><Loader2 className="h-4 w-4 animate-spin" />Analizando...</>
             ) : (
               <><Sparkles className="h-4 w-4" />Analizar con IA</>
-            )}
-          </Button>
-
-          <Button
-            type="button"
-            onClick={() => handleAnalyze(true)}
-            disabled={analyzing || (!perfil?.cv_path && !cvUploaded)}
-            className="gap-2 text-white"
-            style={{ background: "linear-gradient(135deg, #1a73e8, #0d47a1)" }}
-          >
-            {analyzing ? (
-              <><Loader2 className="h-4 w-4 animate-spin" />Analizando...</>
-            ) : (
-              <><Sparkles className="h-4 w-4" />Analizar con Gemini</>
             )}
           </Button>
         </div>
