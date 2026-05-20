@@ -48,7 +48,8 @@ export function calculateCertificationsScore(
     ? candidateCerts.split(",").map((c) => c.trim().toLowerCase())
     : candidateCerts.map((c) => c.toLowerCase());
 
-  const requiredCertsArray = requiredCerts.map((c) => c.toLowerCase());
+  const parsed = typeof requiredCerts === "string" ? JSON.parse(requiredCerts || "[]") : (requiredCerts || []);
+  const requiredCertsArray = parsed.map((c) => c.toLowerCase());
 
   if (requiredCertsArray.length === 0) return 80;
 
