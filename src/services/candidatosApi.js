@@ -120,3 +120,12 @@ export async function analyzeCandidateCvGemini(candidateId) {
 export function getCvUrl(cvPath) {
   return `${API_BASE_URL}/${cvPath}`;
 }
+
+export async function enviarPruebaCandidato(candidateId, vacanteId, testLink) {
+  const response = await fetch(`${API_BASE_URL}/api/candidatos/${candidateId}/enviar-prueba`, {
+    method: "POST",
+    headers: authHeaders({ "Content-Type": "application/json" }),
+    body: JSON.stringify({ vacanteId, testLink }),
+  });
+  return toJson(response);
+}

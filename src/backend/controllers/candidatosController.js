@@ -6,7 +6,8 @@ import {
   updateCandidate,
   updateCandidateCvPath,
 } from "../services/candidatosService.js";
-import { calculateMatchingForCandidate } from "../services/vacantesService.js";
+import { calculateMatchingForCandidate, enviarPruebaACandidato } from "../services/vacantesService.js";
+import { pool } from "../db.js";
 import { readCvPdf } from "../utils/readCvPdf.js";
 import { analyzeCvWithGemini } from "../utils/cvGemini.js";
 
@@ -82,7 +83,6 @@ export async function analyzeCandidateCvHandler(req, res, next) {
 export async function analyzeCandidateCvGeminiHandler(req, res, next) {
   try {
     const { id } = req.params;
-    // Reusar la función que obtiene el cv_path del candidato
     const { pool } = await import("../db.js");
     const [[candidate]] = await pool.query("SELECT cv_path FROM candidatos WHERE id = ?", [id]);
     if (!candidate?.cv_path) {
@@ -93,5 +93,21 @@ export async function analyzeCandidateCvGeminiHandler(req, res, next) {
     return res.json(analysis);
   } catch (error) {
     return next(error);
+  }
+}
+
+export async function enviarPruebaHandler(req, res, next) {
+  try {
+    const { id } = req.params;
+    const { vacanteId, testLink } = req.body;
+    if (!vacanteId || !testLink) {
+      return res.status(400).json({ error: "vacanteId y testLink son requeridos" });
+    }
+    // Actualizar estado a Entrevista y enviar prueba
+    await pool.query("UPDATE candidatos SET estado = 'Entrevista' WHERE id = ?", [parseInt(id)]);
+    await enviarPruebaACandidato(parseInt(id), vacanteId, testLink);
+    res.json({ message: "Estado actualizado y prueba enviada" });
+  } catch (error) {
+    next(error);
   }
 }

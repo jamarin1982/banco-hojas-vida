@@ -3,6 +3,7 @@ import {
   analyzeCandidateCvGemini,
   createCandidate,
   deleteCandidate,
+  enviarPruebaCandidato,
   fetchCandidates,
   mapCandidateToForm,
   updateCandidate,
@@ -156,8 +157,16 @@ export function useCandidatesDashboard() {
     setCandidates((prev) => prev.filter((candidate) => candidate.id !== id));
   };
 
-  const moveStatus = (id, next) => {
-    setCandidates((prev) => prev.map((candidate) => (candidate.id === id ? { ...candidate, estado: next } : candidate)));
+  const moveStatus = async (id, next, vacanteId, testLink) => {
+    setCandidates((prev) => prev.map((c) => (c.id === id ? { ...c, estado: next } : c)));
+
+    if (next === "Entrevista" && vacanteId) {
+      try {
+        await enviarPruebaCandidato(id, vacanteId, testLink || "https://forms.gle/default-test");
+      } catch (err) {
+        console.error("Error enviando prueba:", err);
+      }
+    }
   };
 
   const handleAnalyzeCv = async (candidate) => {

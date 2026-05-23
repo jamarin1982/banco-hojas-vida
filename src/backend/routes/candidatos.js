@@ -9,6 +9,7 @@ import {
   analyzeCandidateCvGeminiHandler,
   createCandidateHandler,
   deleteCandidateHandler,
+  enviarPruebaHandler,
   listCandidates,
   updateCandidateHandler,
   uploadCandidateCvHandler,
@@ -21,6 +22,7 @@ router.post("/",      requireAuth, requireRole("empresa"), validateCandidatePayl
 router.delete("/:id", requireAuth, requireRole("empresa"), validateIdParam, deleteCandidateHandler);
 router.put("/:id",    requireAuth, requireRole("empresa"), validateIdParam, validateCandidatePayload, updateCandidateHandler);
 router.post("/:id/cv",           requireAuth, requireRole("empresa"), validateIdParam, uploadCV.single("cv"), uploadCandidateCvHandler);
+router.post("/:id/enviar-prueba", requireAuth, requireRole("empresa"), validateIdParam, enviarPruebaHandler);
 router.post("/:id/analyze-cv",   requireAuth, requireRole("empresa"), validateIdParam, aiLimiter, analyzeCandidateCvHandler);
 
 // Gemini puede tardar hasta 60s — extender timeout de respuesta

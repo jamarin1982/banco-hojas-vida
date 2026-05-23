@@ -1,7 +1,7 @@
 import { pool } from "../db.ts";
 import { createHttpError } from "../utils/httpError.js";
 import { logger } from "../utils/logger.js";
-import { sendVacanteNotificationEmail } from "../utils/mailer.js";
+import { sendVacanteNotificationEmail, sendTestLinkEmail } from "../utils/mailer.js";
 import { cacheInvalidate } from "../utils/cache.js";
 import { mysqlNow } from "../utils/mysqlDate.js";
 import {
@@ -668,6 +668,36 @@ export async function getTopCandidatesForVacante(vacanteId, limit = 10) {
     return scores;
   } catch (error) {
     logger.error(`Error obteniendo candidatos para vacante ${vacanteId}:`, error);
+    throw error;
+  }
+}
+
+export async function enviarPruebaACandidato(candidatoId, vacanteId, testLink) {
+  try {
+    const [[candidato]] = await pool.query(
+      "SELECT c.nombre, u.email FROM candidatos c JOIN usuarios u ON u.candidato_id = c.id WHERE c.id = ?",
+      [candidatoId]
+    );
+    if (!candidato) throw new Error("Candidato no encontrado");
+
+    const [[vacante]] = await pool.query(
+      "SELECT titulo FROM vacantes WHERE id = ?",
+      [vacanteId]
+    );
+    if (!vacante) throw new Error("Vacante no encontrada");
+
+    await sendTestLinkEmail({
+      email: candidato.email,
+      nombre: candidato.nombre,
+      vacanteTitulo: vacante.titulo,
+      candidatoNombre: candidato.nombre,
+      testLink,
+    });
+
+    logger.info(`Prueba enviada a candidato ${candidatoId} para vacante ${vacanteId}`);
+    return true;
+  } catch (error) {
+    logger.error(`Error enviando prueba a candidato ${candidatoId}:`, error);
     throw error;
   }
 }
