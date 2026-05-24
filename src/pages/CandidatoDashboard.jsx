@@ -4,7 +4,7 @@ import { motion as Motion, AnimatePresence } from "framer-motion";
 import {
   Briefcase, User, LogOut, Search, MapPin, Clock, DollarSign,
   Calendar, CheckCircle, AlertCircle, Loader2, ChevronRight,
-  X, Filter, FileText, Star, Bell, Upload, Sparkles, Eye,
+  X, Filter, FileText, Star, Bell, Upload, Sparkles, Eye, BarChart3,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,6 +27,7 @@ const NAV_ITEMS = [
   { id: "vacantes", label: "Buscar Vacantes",   icon: Briefcase, activeStyle: { background: "linear-gradient(135deg,#1a3a6b,#1565c0)" } },
   { id: "perfil",   label: "Mi Perfil",         icon: User,      activeStyle: { background: "linear-gradient(135deg,#1565c0,#29b6f6)" } },
   { id: "mis-aplicaciones", label: "Mis Aplicaciones", icon: FileText, activeStyle: { background: "linear-gradient(135deg,#0d47a1,#1565c0)" } },
+  { id: "metricas", label: "Mis Métricas",      icon: BarChart3, activeStyle: { background: "linear-gradient(135deg,#00695c,#26a69a)" } },
 ];
 
 function CandidatoSidebar({ activeTab, onTabChange, user, onLogout }) {
@@ -831,10 +832,10 @@ export default function CandidatoDashboard() {
       <CandidatoMobileNav activeTab={activeTab} onTabChange={setActiveTab} />
 
       <main className="space-y-6 px-4 py-8 pb-24 sm:pb-8">
-        <CandidatoMetrics stats={candidatoStats} />
         {activeTab === "vacantes" && <TabVacantes />}
         {activeTab === "perfil" && <TabPerfil token={token} />}
         {activeTab === "mis-aplicaciones" && <TabMisAplicaciones token={token} />}
+        {activeTab === "metricas" && <CandidatoMetrics stats={candidatoStats} />}
       </main>
     </div>
   );
