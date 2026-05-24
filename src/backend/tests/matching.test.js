@@ -89,9 +89,18 @@ test("calculateCertificationsScore is case-insensitive", () => {
   assert.equal(calculateCertificationsScore("react,NODE", ["React", "Node"]), 100);
 });
 
-test("calculateCertificationsScore handles partial string matching", () => {
-  // "JavaScript" includes "Script" → match
-  assert.equal(calculateCertificationsScore("JavaScript", ["Script"]), 100);
+test("calculateCertificationsScore uses word-boundary matching", () => {
+  // "AWS" is a standalone word → match
+  assert.equal(calculateCertificationsScore("AWS Certified,JavaScript", ["AWS"]), 100);
+});
+
+test("calculateCertificationsScore rejects substring matches", () => {
+  // "Script" is not a standalone word in "JavaScript" → no match
+  assert.equal(calculateCertificationsScore("JavaScript", ["Script"]), 0);
+});
+
+test("calculateCertificationsScore matches multi-word certifications", () => {
+  assert.equal(calculateCertificationsScore("AWS Certified Developer", ["AWS Certified Developer"]), 100);
 });
 
 test("calculateCertificationsScore handles array input for candidate certs", () => {
