@@ -36,3 +36,6 @@ src/backend/uploads/cv/*.PDF
 # Archivos temporales de BD
 src/backend/temp-db-check.mjs
 src/backend/checkDb.mjs
+
+# Temp Word lock files
+~$*.docx
