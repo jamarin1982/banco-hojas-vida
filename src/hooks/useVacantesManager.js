@@ -22,6 +22,7 @@ const EMPTY_VACANTE_FORM = {
   jornada: "Completa",
   salario_minimo: "",
   salario_maximo: "",
+  test_link: "",
   estado: "Activa",
 };
 

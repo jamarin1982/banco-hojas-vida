@@ -100,8 +100,8 @@ export async function enviarPruebaHandler(req, res, next) {
   try {
     const { id } = req.params;
     const { vacanteId, testLink } = req.body;
-    if (!vacanteId || !testLink) {
-      return res.status(400).json({ error: "vacanteId y testLink son requeridos" });
+    if (!vacanteId) {
+      return res.status(400).json({ error: "vacanteId es requerido" });
     }
     // Actualizar estado a Entrevista y enviar prueba
     await pool.query("UPDATE candidatos SET estado = 'Entrevista' WHERE id = ?", [parseInt(id)]);

@@ -679,6 +679,21 @@ export function VacanteForm({ form, setForm, onSave, onCancel, isLoading, pregun
         </Card>
       )}
 
+      {/* Enlace de prueba técnica */}
+      <div className="space-y-2">
+        <Label htmlFor="test_link">Enlace de prueba técnica</Label>
+        <Input
+          id="test_link"
+          type="url"
+          placeholder="https://forms.gle/..."
+          value={form.test_link || ""}
+          onChange={(e) => setForm({ ...form, test_link: e.target.value })}
+        />
+        <p className="text-xs text-slate-400">
+          Opcional. Si se configura, se usará este enlace al enviar la prueba técnica al candidato.
+        </p>
+      </div>
+
       {/* Estado */}
       <div className="space-y-2">
         <Label htmlFor="estado">Estado</Label>

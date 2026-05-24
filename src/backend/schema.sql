@@ -33,6 +33,7 @@ CREATE TABLE IF NOT EXISTS vacantes (
   jornada VARCHAR(50),
   salario_minimo DECIMAL(10, 2),
   salario_maximo DECIMAL(10, 2),
+  test_link VARCHAR(255) DEFAULT NULL,
   estado VARCHAR(20) DEFAULT 'Activa',
   fecha_creacion VARCHAR(50),
   fecha_actualizacion VARCHAR(50),

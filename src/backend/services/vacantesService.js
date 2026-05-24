@@ -90,9 +90,9 @@ export async function createVacante(vacante) {
     const [result] = await pool.query(
       `INSERT INTO vacantes
        (titulo, descripcion, resumen, responsabilidades, requisitos, ofrecemos, cargo, ciudad, experiencia_minima, experiencia_maxima,
-        certificaciones_requeridas, disponibilidad, jornada, salario_minimo, salario_maximo, estado,
+        certificaciones_requeridas, disponibilidad, jornada, salario_minimo, salario_maximo, test_link, estado,
         fecha_creacion, fecha_actualizacion)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         vacante.titulo,
         vacante.descripcion || null,
@@ -109,6 +109,7 @@ export async function createVacante(vacante) {
         vacante.jornada || "Completa",
         vacante.salario_minimo || null,
         vacante.salario_maximo || null,
+        vacante.test_link || null,
         vacante.estado || "Activa",
         now,
         now,
@@ -144,6 +145,7 @@ export async function updateVacante(id, vacante) {
         jornada = ?,
         salario_minimo = ?,
         salario_maximo = ?,
+        test_link = ?,
         estado = ?,
         fecha_actualizacion = ?
        WHERE id = ?`,
@@ -163,6 +165,7 @@ export async function updateVacante(id, vacante) {
         vacante.jornada || "Completa",
         vacante.salario_minimo || null,
         vacante.salario_maximo || null,
+        vacante.test_link || null,
         vacante.estado || "Activa",
         now,
         id,
@@ -681,17 +684,19 @@ export async function enviarPruebaACandidato(candidatoId, vacanteId, testLink) {
     if (!candidato) throw new Error("Candidato no encontrado");
 
     const [[vacante]] = await pool.query(
-      "SELECT titulo FROM vacantes WHERE id = ?",
+      "SELECT titulo, test_link FROM vacantes WHERE id = ?",
       [vacanteId]
     );
     if (!vacante) throw new Error("Vacante no encontrada");
+
+    const link = testLink || vacante.test_link || process.env.TEST_PLATFORM_URL || "https://forms.gle/default-test";
 
     await sendTestLinkEmail({
       email: candidato.email,
       nombre: candidato.nombre,
       vacanteTitulo: vacante.titulo,
       candidatoNombre: candidato.nombre,
-      testLink,
+      testLink: link,
     });
 
     logger.info(`Prueba enviada a candidato ${candidatoId} para vacante ${vacanteId}`);

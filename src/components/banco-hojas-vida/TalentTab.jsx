@@ -20,7 +20,6 @@ export function TalentTab({
   loadingIA,
   onAnalyzeCv,
   vacanteId,
-  testLink,
 }) {
   return (
     <div className="grid gap-6 lg:grid-cols-[280px_1fr]">
@@ -63,7 +62,6 @@ export function TalentTab({
                 loadingIA={loadingIA}
                 onAnalyzeCv={onAnalyzeCv}
                 vacanteId={vacanteId}
-                testLink={testLink}
               />
             </Motion.div>
           ))

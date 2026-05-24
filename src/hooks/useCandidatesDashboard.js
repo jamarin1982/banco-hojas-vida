@@ -157,12 +157,12 @@ export function useCandidatesDashboard() {
     setCandidates((prev) => prev.filter((candidate) => candidate.id !== id));
   };
 
-  const moveStatus = async (id, next, vacanteId, testLink) => {
+  const moveStatus = async (id, next, vacanteId) => {
     setCandidates((prev) => prev.map((c) => (c.id === id ? { ...c, estado: next } : c)));
 
     if (next === "Entrevista" && vacanteId) {
       try {
-        await enviarPruebaCandidato(id, vacanteId, testLink || "https://forms.gle/default-test");
+        await enviarPruebaCandidato(id, vacanteId);
       } catch (err) {
         console.error("Error enviando prueba:", err);
       }

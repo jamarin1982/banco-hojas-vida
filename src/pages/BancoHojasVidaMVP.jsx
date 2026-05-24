@@ -223,7 +223,6 @@ export default function BancoHojasVidaMVP() {
               loadingIA={loadingIA}
               onAnalyzeCv={handleAnalyzeCv}
               vacanteId={selectedVacante?.id || null}
-              testLink={import.meta.env.VITE_TEST_PLATFORM_URL || "https://forms.gle/default-test"}
             />
           </TabsContent>
 

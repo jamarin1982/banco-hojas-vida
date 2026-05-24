@@ -39,6 +39,7 @@ services:
       SMTP_USER: ${SMTP_USER:-}
       SMTP_PASS: ${SMTP_PASS:-}
       FRONTEND_URL: http://localhost:80
+      TEST_PLATFORM_URL: ${TEST_PLATFORM_URL:-https://forms.gle/default-test}
       JWT_SECRET: ${JWT_SECRET:-supersecretkey}
     depends_on:
       mysql:

@@ -16,7 +16,6 @@ export function CandidateCard({
   loadingIA,
   onAnalyzeCv,
   vacanteId,
-  testLink,
 }) {
   return (
     <Motion.div
@@ -105,7 +104,7 @@ export function CandidateCard({
             {/* Botones principales */}
             <div className="grid grid-cols-2 gap-3">
               <Button 
-                onClick={() => moveStatus(candidate.id, "Entrevista", vacanteId, testLink)}
+                onClick={() => moveStatus(candidate.id, "Entrevista", vacanteId)}
                 variant="outline"
                 className="gap-2 rounded-xl"
               >
