@@ -1,178 +1,159 @@
-## Guía Rápida de Inicio
+# Guía Rápida de Inicio
 
-### 1. Instalar dependencias
+## 1. Con Docker (recomendado)
 
-**Frontend:**
 ```bash
-cd c:\banco-hojas-vida\banco-hojas-vida
-npm install
+git clone https://github.com/jamarin1982/banco-hojas-vida.git
+cd banco-hojas-vida
+docker compose up -d
 ```
 
-**Backend:**
+La aplicación queda disponible en:
+- **Frontend (recrutador y candidato):** http://localhost:80
+- **Backend API:** http://localhost:4000
+
+Para actualizar después de cambios:
 ```bash
-cd c:\banco-hojas-vida\banco-hojas-vida\src\backend
-npm install
-```
-
----
-
-### 2. Configurar variables de entorno
-
-En `c:\banco-hojas-vida\banco-hojas-vida\src\backend\.env`:
-
-```env
-DB_HOST=localhost
-DB_PORT=3306
-DB_USER=root
-DB_PASSWORD=tu_contraseña
-DB_NAME=banco_hojas_vida
-PORT=4000
+docker compose build
+docker compose up -d
 ```
 
 ---
 
-### 3. Crear esquema de base de datos
+## 2. Sin Docker (desarrollo)
 
+### Frontend
 ```bash
-cd c:\banco-hojas-vida\banco-hojas-vida\src\backend
+cd banco-hojas-vida
+npm install
+npm run dev          # http://localhost:5173
+```
+
+### Backend
+```bash
+cd src/backend
+npm install
+npm run dev          # http://localhost:4000
+```
+
+### Base de datos
+Configurar `.env` en `src/backend/` y ejecutar:
+```bash
+cd src/backend
 node runSchema.js
 ```
 
 ---
 
-### 4. Ejecutar aplicación
+## 3. Funcionalidades principales
 
-**Terminal 1 - Frontend:**
+### Portal Reclutador — http://localhost/empresa
+
+| Pestaña | Qué hace |
+|---------|----------|
+| **Dashboard** | Métricas generales: vacantes activas, score por vacante, más populares |
+| **Analíticas** | (en el menú lateral, según configuración) |
+| **Base de Talento** | Lista de candidatos con filtros, scores de match, cambio de estado |
+| **Registrar Candidato** | Formulario para agregar candidatos manualmente + subir CV |
+| **Gestionar Vacantes** | Crear/editar vacantes con perfil generado por IA |
+| **Matching Automático** | Ver candidatos sugeridos por vacante con puntaje de compatibilidad |
+
+**Flujo típico:**
+1. Crear una vacante → el sistema calcula matching automáticamente
+2. Ir a "Matching Automático", seleccionar la vacante
+3. Ver candidatos con score >= 70%
+4. Mover candidatos por el proceso: Sugerido → Entrevista → Aprobado
+5. Al pasar a "Entrevista", se envía correo con enlace de prueba técnica
+6. El enlace de prueba se configura en cada vacante (campo "Enlace de prueba técnica")
+
+### Portal Candidato — http://localhost/candidato
+
+| Pestaña | Qué hace |
+|---------|----------|
+| **Buscar Vacantes** | Explorar y aplicar a vacantes activas |
+| **Mi Perfil** | Editar datos personales, subir CV, analizar con IA |
+| **Mis Aplicaciones** | Historial de vacantes aplicadas |
+| **Mis Métricas** | KPIs personales: aplicaciones activas/cerradas, mejor match, perfil completo |
+
+**Flujo típico:**
+1. Registrarse con email, contraseña y hoja de vida
+2. Aceptar la política de tratamiento de datos personales
+3. El CV se analiza automáticamente con Gemini para completar el perfil
+4. Buscar vacantes y aplicar
+5. Revisar las métricas personales en "Mis Métricas"
+
+---
+
+## 4. Configuración opcional
+
+### Análisis de CV con Gemini
+Agregar en el `.env` de la raíz (para Docker) o en `src/backend/.env`:
+```env
+GEMINI_API_KEY=tu_api_key_de_google
+```
+
+### Correos electrónicos
+```env
+SMTP_HOST=smtp.tu-servidor.com
+SMTP_PORT=587
+SMTP_USER=tu_usuario
+SMTP_PASS=tu_contraseña
+```
+Sin SMTP configurado, los correos se muestran en la consola del backend.
+
+---
+
+## 5. API - Ejemplos rápidos
+
+### Obtener estadísticas del dashboard
 ```bash
-cd c:\banco-hojas-vida\banco-hojas-vida
-npm run dev
+curl -H "Authorization: Bearer <token>" http://localhost:4000/api/dashboard/stats
 ```
 
-**Terminal 2 - Backend:**
+### Enviar prueba técnica a candidato
 ```bash
-cd c:\banco-hojas-vida\banco-hojas-vida\src\backend
-npm run start
+curl -X POST http://localhost:4000/api/candidatos/1/enviar-prueba \
+  -H "Authorization: Bearer <token>" \
+  -H "Content-Type: application/json" \
+  -d '{"vacanteId": 1}'
 ```
 
-La aplicación estará disponible en:
-- Frontend: http://localhost:5175
-- Backend API: http://localhost:4000
-
----
-
-## Funcionalidades principales
-
-### Registrar un candidato
-1. Ir a tab "➕ Registrar Candidato"
-2. Llenar formulario con datos básicos
-3. Click en "Guardar Candidato"
-
-### Subir CV y analizar
-1. En la lista de candidatos, hacer click en el icono 📄
-2. Subir archivo PDF
-3. El sistema extrae automáticamente: nombre, cargo, experiencia, ciudad, certificaciones
-
-### Crear una vacante
-1. Ir a tab "💼 Gestionar Vacantes"
-2. Click en "Nueva Vacante"
-3. Llenar requisitos (cargo, ciudad, experiencia, certificaciones, disponibilidad)
-4. Save - Se calcula matching automáticamente
-
-### Ver matching
-1. Ir a tab "🎯 Matching Automático"
-2. Seleccionar una vacante
-3. Ver candidatos sugeridos con puntaje de compatibilidad
-
----
-
-## Estructura de respuestas API
-
-### GET /api/candidatos
-```json
-[
-  {
-    "id": 1,
-    "nombre": "Juan Pérez",
-    "ciudad": "Barranquilla",
-    "cargo": "DESARROLLADOR",
-    "experiencia": 5,
-    "certificaciones": "JavaScript,React",
-    "disponibilidad": "Inmediata",
-    "jornada": "Completa",
-    "aspiration": 4000000,
-    "estado": "Aplicó",
-    "observaciones": "...",
-    "cv_path": "/uploads/cv/1.pdf"
-  }
-]
-```
-
-### POST /api/vacantes
-```json
-{
-  "titulo": "Senior Developer",
-  "cargo": "DESARROLLADOR",
-  "ciudad": "Barranquilla",
-  "experiencia_minima": 3,
-  "experiencia_maxima": 10,
-  "certificaciones_requeridas": ["JavaScript", "React", "Node.js"],
-  "disponibilidad": "Inmediata",
-  "jornada": "Completa",
-  "salario_minimo": 3000000,
-  "salario_maximo": 5000000,
-  "estado": "Activa"
-}
-```
-
-### GET /api/vacantes/:id/candidatos
-```json
-[
-  {
-    "candidato_id": 1,
-    "nombre": "Juan Pérez",
-    "cargo": "DESARROLLADOR",
-    "ciudad": "Barranquilla",
-    "experiencia": 5,
-    "score_total": 85.5,
-    "score_experiencia": 90,
-    "score_certificaciones": 80,
-    "score_ubicacion": 100,
-    "score_disponibilidad": 100
-  }
-]
+### Registrar candidato
+```bash
+curl -X POST http://localhost:4000/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"nombre":"Juan","email":"juan@email.com","password":"12345678","rol":"candidato","consentimiento":true}'
 ```
 
 ---
 
-## Troubleshooting
+## 6. Troubleshooting
 
-### Error "Cannot connect to MySQL"
-- Verificar que MySQL esté corriendo
-- Verificar credenciales en `.env`
-- Verificar host y puerto
+### Docker: puerto 80 en uso
+Editar `docker-compose.yml` y cambiar `"80:80"` a otro puerto como `"8080:80"`.
 
-### Error "pdftotext not found"
-- Instalar `pdftotext` desde xpdf-tools
-- Windows: descargar desde http://www.xpdfreader.com/download.html
-- Agregar a PATH del sistema
+### Backend no conecta a MySQL
+```bash
+docker logs bhv-backend
+```
+Verificar que MySQL esté saludable: `docker ps | Select-String mysql`
 
-### Puerto ya está en uso
-- Para cambiar puerto del frontend: `npm run dev -- --port 5200`
-- Para cambiar puerto del backend: cambiar `PORT` en `.env`
+### Los cambios no se ven después de modificar código
+```bash
+docker compose build
+docker compose up -d
+```
 
----
-
-## Desarrolladores
-
-Para contribuir:
-1. Hacer fork del proyecto
-2. Crear rama feature (`git checkout -b feature/AmazingFeature`)
-3. Commit cambios (`git commit -m 'Add AmazingFeature'`)
-4. Push a la rama (`git push origin feature/AmazingFeature`)
-5. Abrir Pull Request
+### Error "Debes aceptar la política de tratamiento de datos"
+Al registrarse como candidato, marcar el checkbox de consentimiento.
 
 ---
 
-## Licencia
+## 7. Variables de entorno principales
 
-Este proyecto está bajo licencia ISC.
+| Variable | Descripción | Defecto |
+|----------|-------------|---------|
+| `GEMINI_API_KEY` | API key de Google Gemini | - |
+| `SMTP_HOST` | Servidor SMTP | - |
+| `JWT_SECRET` | Secreto para tokens JWT | `supersecretkey` |
+| `TEST_PLATFORM_URL` | URL por defecto para pruebas técnicas | `https://forms.gle/default-test` |
