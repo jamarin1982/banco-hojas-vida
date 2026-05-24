@@ -17,8 +17,13 @@ import { analyzeCvWithGemini } from "../utils/cvGemini.js";
 
 export async function registerHandler(req, res, next) {
   try {
-    const { nombre, email, password, rol, nombreEmpresa } = req.body;
+    const { nombre, email, password, rol, nombreEmpresa, consentimiento } = req.body;
     const rolEfectivo = rol || "candidato";
+
+    if (rolEfectivo === "candidato" && !consentimiento) {
+      if (req.file) { const fs = await import("fs/promises"); await fs.unlink(req.file.path).catch(() => {}); }
+      return res.status(400).json({ error: "Debes aceptar la política de tratamiento de datos personales." });
+    }
 
     if (!nombre?.trim() || !email?.trim() || !password) {
       // Si multer subió un archivo pero hay error de validación, eliminarlo
@@ -52,6 +57,8 @@ export async function registerHandler(req, res, next) {
       rol: rolEfectivo,
       nombreEmpresa,
       cvPath: req.file?.path || null,
+      consentimiento: !!consentimiento,
+      ipAddress: req.ip || req.connection?.remoteAddress,
     });
     res.status(201).json(result);
   } catch (err) {

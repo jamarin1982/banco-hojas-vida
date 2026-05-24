@@ -174,12 +174,15 @@ export function CandidateForm({ form, setForm, handleAdd, editingCandidate }) {
         </Button>
       </div>
 
-      {/* Info de próximas fases */}
-      <div className="rounded-lg bg-amber-50 p-4 border border-amber-200 flex gap-3">
-        <AlertCircle className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
+      {/* Aviso de protección de datos */}
+      <div className="rounded-lg bg-blue-50 p-4 border border-blue-200 flex gap-3">
+        <AlertCircle className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
         <div>
-          <p className="text-sm font-medium text-amber-900">Funcionalidades en desarrollo</p>
-          <p className="text-sm text-amber-700 mt-1">Carga automática de CV y análisis con IA en la fase 2</p>
+          <p className="text-sm font-medium text-blue-900">Protección de datos personales</p>
+          <p className="text-sm text-blue-700 mt-1">
+            Al guardar este candidato, declaras que has obtenido su consentimiento para el tratamiento de sus datos personales
+            conforme a la Ley 1581 de 2012 y el Decreto 1377 de 2013.
+          </p>
         </div>
       </div>
     </div>

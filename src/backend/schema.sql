@@ -42,6 +42,19 @@ CREATE TABLE IF NOT EXISTS vacantes (
 );
 
 -- Tabla de Aplicaciones/Matching
+-- Tabla de consentimientos (protección de datos - Ley 1581 de 2012)
+CREATE TABLE IF NOT EXISTS consentimientos (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  usuario_id INT DEFAULT NULL,
+  candidato_id INT DEFAULT NULL,
+  tipo VARCHAR(50) DEFAULT 'registro',
+  ip_address VARCHAR(45) DEFAULT NULL,
+  version_politica VARCHAR(20) DEFAULT '1.0',
+  fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_usuario (usuario_id),
+  INDEX idx_candidato (candidato_id)
+);
+
 CREATE TABLE IF NOT EXISTS vacante_candidato_score (
   id INT PRIMARY KEY AUTO_INCREMENT,
   vacante_id INT NOT NULL,

@@ -10,8 +10,8 @@ function authHeaders(token) {
   return { "Content-Type": "application/json", Authorization: `Bearer ${token}` };
 }
 
-export async function apiRegister({ nombre, email, password, rol, nombreEmpresa, cvFile }) {
-  const body = cvFile ? new FormData() : JSON.stringify({ nombre, email, password, rol, nombreEmpresa });
+export async function apiRegister({ nombre, email, password, rol, nombreEmpresa, cvFile, consentimiento }) {
+  const body = cvFile ? new FormData() : JSON.stringify({ nombre, email, password, rol, nombreEmpresa, consentimiento });
   const headers = cvFile ? {} : { "Content-Type": "application/json" };
 
   if (cvFile) {
@@ -20,6 +20,7 @@ export async function apiRegister({ nombre, email, password, rol, nombreEmpresa,
     body.append("password", password);
     body.append("rol", rol);
     if (nombreEmpresa) body.append("nombreEmpresa", nombreEmpresa);
+    body.append("consentimiento", consentimiento ? "true" : "");
     body.append("cv", cvFile);
   }
 

@@ -19,6 +19,7 @@ export default function LoginCandidatoPage() {
   const [error, setError] = useState("");
   const [form, setForm] = useState({ nombre: "", email: "", password: "" });
   const [cvFile, setCvFile] = useState(null);
+  const [consentimiento, setConsentimiento] = useState(false);
 
   const setField = (f, v) => setForm((p) => ({ ...p, [f]: v }));
 
@@ -47,7 +48,10 @@ export default function LoginCandidatoPage() {
         if (cvFile.size > 10 * 1024 * 1024) {
           throw new Error("El archivo excede el tamaño máximo de 10 MB.");
         }
-        result = await apiRegister({ nombre: form.nombre, email: form.email, password: form.password, rol: "candidato", cvFile });
+        if (!consentimiento) {
+          throw new Error("Debes aceptar la política de tratamiento de datos personales.");
+        }
+        result = await apiRegister({ nombre: form.nombre, email: form.email, password: form.password, rol: "candidato", cvFile, consentimiento });
       }
       login(result.token, result.user);
       navigate("/candidato", { replace: true });
@@ -204,7 +208,27 @@ export default function LoginCandidatoPage() {
                 </div>
               </div>
 
-              <Button type="submit" disabled={loading} className="w-full gap-2 text-white font-semibold py-2.5"
+              {mode === "register" && (
+                <div className="flex items-start gap-2">
+                  <input
+                    id="consentimiento"
+                    type="checkbox"
+                    checked={consentimiento}
+                    onChange={(e) => setConsentimiento(e.target.checked)}
+                    className="mt-1 h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                    required
+                  />
+                  <label htmlFor="consentimiento" className="text-xs text-slate-600 leading-relaxed">
+                    Acepto la{" "}
+                    <a href="/politica-de-datos" target="_blank" className="text-blue-600 hover:text-blue-800 underline">
+                      política de tratamiento de datos personales
+                    </a>{" "}
+                    de conformidad con la Ley 1581 de 2012 y el Decreto 1377 de 2013.
+                  </label>
+                </div>
+              )}
+
+              <Button type="submit" disabled={loading || (mode === "register" && !consentimiento)} className="w-full gap-2 text-white font-semibold py-2.5"
                 style={{ background: "linear-gradient(135deg, #1565c0, #29b6f6)" }}>
                 {loading ? (
                   <><Loader2 className="h-4 w-4 animate-spin" />{mode === "login" ? "Ingresando..." : "Creando cuenta..."}</>

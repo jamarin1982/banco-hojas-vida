@@ -68,6 +68,19 @@ CREATE TABLE IF NOT EXISTS vacantes (
   INDEX idx_ciudad (ciudad)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Tabla de consentimientos (protección de datos - Ley 1581 de 2012)
+CREATE TABLE IF NOT EXISTS consentimientos (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  usuario_id INT DEFAULT NULL,
+  candidato_id INT DEFAULT NULL,
+  tipo VARCHAR(50) DEFAULT 'registro',
+  ip_address VARCHAR(45) DEFAULT NULL,
+  version_politica VARCHAR(20) DEFAULT '1.0',
+  fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_usuario (usuario_id),
+  INDEX idx_candidato (candidato_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- Tabla de Aplicaciones/Matching
 CREATE TABLE IF NOT EXISTS vacante_candidato_score (
   id INT PRIMARY KEY AUTO_INCREMENT,

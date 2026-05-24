@@ -28,7 +28,7 @@ function safeUser(user) {
 
 // ─── Registro ─────────────────────────────────────────────────────────────────
 
-export async function registerUser({ nombre, email, password, rol = "candidato", nombreEmpresa, cvPath }) {
+export async function registerUser({ nombre, email, password, rol = "candidato", nombreEmpresa, cvPath, consentimiento, ipAddress }) {
   const now = mysqlNow();
 
   const rolesValidos = ["candidato", "empresa"];
@@ -65,6 +65,15 @@ export async function registerUser({ nombre, email, password, rol = "candidato",
         candidatoId = cr.insertId;
         await pool.query("UPDATE usuarios SET candidato_id = ?, roles = 'empresa,candidato' WHERE id = ?", [candidatoId, existing.id]);
       }
+      // Guardar consentimiento para activación de perfil candidato
+      if (consentimiento) {
+        const cid = existing.candidato_id || candidatoId;
+        await pool.query(
+          "INSERT INTO consentimientos (usuario_id, candidato_id, tipo, ip_address, version_politica) VALUES (?, ?, 'registro', ?, '1.0')",
+          [existing.id, cid, ipAddress || null]
+        );
+      }
+
       const [[user]] = await pool.query("SELECT * FROM usuarios WHERE id = ?", [existing.id]);
       logger.info(`Perfil candidato activado para usuario empresa: ${email}`);
       // Devolver token con rol candidato para redirigir al portal candidato
@@ -136,6 +145,15 @@ export async function registerUser({ nombre, email, password, rol = "candidato",
       }
     }
     await pool.query("UPDATE usuarios SET candidato_id = ? WHERE id = ?", [candidatoId, usuarioId]);
+  }
+
+  // Guardar consentimiento de protección de datos
+  if (consentimiento) {
+    const candidatoId = rol === "candidato" ? (await pool.query("SELECT candidato_id FROM usuarios WHERE id = ?", [usuarioId]))[0][0]?.candidato_id : null;
+    await pool.query(
+      "INSERT INTO consentimientos (usuario_id, candidato_id, tipo, ip_address, version_politica) VALUES (?, ?, 'registro', ?, '1.0')",
+      [usuarioId, candidatoId, ipAddress || null]
+    );
   }
 
   const [[user]] = await pool.query("SELECT * FROM usuarios WHERE id = ?", [usuarioId]);

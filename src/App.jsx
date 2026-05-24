@@ -8,6 +8,7 @@ import LoginEmpresaPage from "./pages/LoginEmpresaPage";
 import LoginCandidatoPage from "./pages/LoginCandidatoPage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
+import PoliticaDatosPage from "./pages/PoliticaDatosPage";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 
 // Spinner de carga global
@@ -47,6 +48,9 @@ function App() {
       {/* Recuperar contraseña */}
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/reset-password" element={<ResetPasswordPage />} />
+
+      {/* Política de datos */}
+      <Route path="/politica-de-datos" element={<PoliticaDatosPage />} />
 
       {/* Dashboard empresa/reclutador */}
       <Route
